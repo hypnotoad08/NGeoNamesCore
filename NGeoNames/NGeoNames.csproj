@@ -1,33 +1,47 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup>
-    <TargetFrameworks>net45;net451;net452;net46;net461;net462;net47;net471;netstandard2.0;netcoreapp2.0</TargetFrameworks>
-    <Authors>RobIII</Authors>
-    <Company>RobIII</Company>
-    <PackageId>NGeoNames</PackageId>
-    <NoPackageAnalysis>true</NoPackageAnalysis>
-    <Product>NGeoNames</Product>
-    <Copyright>(C) 2014 - 2018 Devcorner.nl</Copyright>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <PackageLicenseUrl>https://raw.githubusercontent.com/RobThree/NGeoNames/master/LICENSE</PackageLicenseUrl>
-    <PackageProjectUrl>https://github.com/RobThree/NGeoNames</PackageProjectUrl>
-    <PackageTags>reverse-geocoding geocoding geocode reverse-geocode geocoder reverse-geocoder maps</PackageTags>
-    <PackageReleaseNotes>* Add support for AlternateNamesV2</PackageReleaseNotes>
-    <Description>Provides classes and methods for downloading, reading/parsing and utilizing files from GeoNames.org dumps.</Description>
-    <PackageIconUrl>https://raw.githubusercontent.com/RobThree/NGeoNames/master/icon.png</PackageIconUrl>
-    <Version>1.5.1</Version>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DefineConstants>TRACE;RELEASE;NETSTANDARD2_0</DefineConstants>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net45|AnyCPU'">
-    <DocumentationFile>bin\Release\net45\NGeoNames.xml</DocumentationFile>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="KdTree" Version="1.4.0" />
-    <PackageReference Include="System.IO.Compression" Version="4.3.0" />
-  </ItemGroup>
+	<PropertyGroup>
+		<TargetFrameworks>net8.0</TargetFrameworks>
+		<Authors>Hypnotoad08</Authors>
+		<Company>Hypnotoad08</Company>
+		<PackageId>NGeoNamesCore</PackageId>
+		<NoPackageAnalysis>true</NoPackageAnalysis>
+		<Product>NGeoNamesCore</Product>
+		<Copyright>(C) 2024 Hypnotoad08</Copyright>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<PackageProjectUrl>https://github.com/Hypnotoad08/NGeoNamesCore</PackageProjectUrl>
+		<PackageTags>reverse-geocoding geocoding geocode reverse-geocode geocoder reverse-geocoder maps</PackageTags>
+		<PackageReleaseNotes>This is a fork of NGeoNames, updated for .NET Core and .NET 6+ compatibility.</PackageReleaseNotes>
+		<Description>Provides classes and methods for downloading, reading/parsing, and utilizing files from GeoNames.org dumps. Forked from NGeoNames for .NET Core compatibility.</Description>
+		<PackageIconUrl>https://raw.githubusercontent.com/Hypnotoad08/NGeoNamesCore/main/icon.png</PackageIconUrl>
+		<Version>1.6.0</Version>
+		<Title>NGeoNamesCore</Title>
+		<PackageIcon>icon.png</PackageIcon>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageLicenseFile>LICENSE</PackageLicenseFile>
+		<RepositoryUrl>https://github.com/Hypnotoad08/NGeoNamesCore</RepositoryUrl>
+		<RepositoryType>Git</RepositoryType>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+		<DefineConstants>TRACE;RELEASE;NETSTANDARD2_0</DefineConstants>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net45|AnyCPU'">
+		<DocumentationFile>bin\Release\net45\NGeoNamesCore.xml</DocumentationFile>
+	</PropertyGroup>
+	<ItemGroup>
+	  <None Include="..\icon.png">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
+	  <None Include="..\LICENSE">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
+	  <None Include="..\README.md">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="KdTree" Version="1.4.1" />
+	</ItemGroup>
 </Project>

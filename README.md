@@ -1,10 +1,18 @@
-# ![Logo](https://raw.githubusercontent.com/RobThree/NGeoNames/master/icon.png) NGeoNames
+# ![Logo](https://raw.githubusercontent.com/RobThree/NGeoNames/master/icon.png) NGeoNamesCore
 
-Inspired by [OfflineReverseGeocode](https://github.com/AReallyGoodName/OfflineReverseGeocode) found at [this Reddit post](http://www.reddit.com/r/programming/comments/281msj/). You may also be interested in [GeoSharp](https://github.com/Necrolis/GeoSharp). Uses [KdTree](https://github.com/codeandcats/KdTree). Built and tested on .Net 4.5.
+This project is a fork of the original [NGeoNames](https://github.com/RobThree/NGeoNames) by RobThree, which has been modified to be compatible with .NET Core and .NET 6+.
 
-This library provides classes for downloading, reading and parsing, writing and composing [files from](http://download.geonames.org/export/dump/) [GeoNames.org](http://download.geonames.org/export/zip/) and provides (reverse) geocoding methods like `NearestNeighbourSearch()` and `RadialSearch()` on the downloaded dataset(s).
+### Changes in this fork:
+- Migrated from .NET Framework 4.5 to .NET Core / .NET 6.
+- Renamed the project to **NGeoNamesCore** to reflect .NET Core compatibility.
+- Updated dependencies and APIs to support .NET Core and the latest .NET standards.
 
-This library is available as [NuGet package](https://www.nuget.org/packages/NGeoNames/).
+Inspired by [OfflineReverseGeocode](https://github.com/AReallyGoodName/OfflineReverseGeocode) found in [this Reddit post](http://www.reddit.com/r/programming/comments/281msj/). You may also be interested in [GeoSharp](https://github.com/Necrolis/GeoSharp). Uses [KdTree](https://github.com/codeandcats/KdTree).
+
+This library provides classes for downloading, reading, parsing, writing, and composing [files from GeoNames.org](http://download.geonames.org/export/dump/) and offers (reverse) geocoding methods such as `NearestNeighbourSearch()` and `RadialSearch()` on the downloaded dataset(s).
+
+This library will be available as a [NuGet package](https://www.nuget.org/packages/NGeoNamesCore/) soon, reflecting the changes to .NET Core and .NET 6 compatibility.
+
 
 ## Basic usage / example / "quick start"
 
@@ -191,16 +199,34 @@ The `GeoNamesReader` and `GeoNamesWriter` and the (Extended)GeoName parsers/comp
 
 ## Help
 
-The [NuGet package](https://www.nuget.org/packages/NGeoNames/) comes with a Windows Help File (`NGeonames.chm`) with lots more information. You can also build this help file, or other formats, yourself using [Sandcastle Help File Builder](https://shfb.codeplex.com/). And finally you can use the richly commented code if you don't want to build or use help files.
+This fork will come with updated documentation for **NGeoNamesCore** to reflect changes for .NET Core and .NET 6 compatibility.
+
+You can explore the code directly as it is richly commented. Updated help files and documentation may be included in future releases.
+
+For more information on usage, refer to the examples in this `README.md` or the original [NGeoNames repository](https://github.com/RobThree/NGeoNames).
 
 ## Project status
 
-<img src="http://riii.nl/womm" width="200" height="200" align="left"> The project will be updated from time-to-time when required. I am happy to accept pull-requests; if you're interested in contributing to this library please contact me. If you have any issues please [open an issue](https://github.com/RobThree/NGeoNames/issues).
+This is a fork of the original [NGeoNames](https://github.com/RobThree/NGeoNames) and has been renamed to **NGeoNamesCore** to reflect compatibility with .NET Core and .NET 6+.
 
-[![Build status](https://ci.appveyor.com/api/projects/status/mkmbxvm1w0mxaifv)](https://ci.appveyor.com/project/RobIII/ngeonames) <a href="https://www.nuget.org/packages/NGeoNames/"><img src="http://img.shields.io/nuget/v/NGeoNames.svg?style=flat-square" alt="NuGet version" height="18"></a>
+The project will be updated as needed to ensure compatibility with newer versions of .NET, and I welcome contributions. If you’re interested in contributing to this library, feel free to submit a pull request.
+
+If you encounter any issues, please [open an issue](https://github.com/Hypnotoad08/NGeoNamesCore/issues).
+
+[![Build status](https://ci.appveyor.com/api/projects/status/mkmbxvm1w0mxaifv)](https://ci.appveyor.com/project/RobIII/ngeonames) <!-- Replace with your own CI badge when available -->
+<a href="https://www.nuget.org/packages/NGeoNamesCore/"><img src="http://img.shields.io/nuget/v/NGeoNamesCore.svg?style=flat-square" alt="NuGet version" height="18"></a>
+
 
 ## License
 
-Licensed under MIT license. See [LICENSE](LICENSE) for details.
+This project is licensed under the MIT license. See [LICENSE](LICENSE) for details.
+
+The original project is licensed under the same MIT license, and all credits to the original author remain intact.
 
 [Logo / icon](http://www.iconninja.com/earth-search-internet-icon-44388) sourced from iconninja.com ([Archived page](http://riii.me/rftqo))
+
+## NuGet Package
+
+The original NuGet package for **NGeoNames** can be found [here](https://www.nuget.org/packages/NGeoNames/).
+
+This forked version will soon be available as **NGeoNamesCore** on [NuGet.org](https://www.nuget.org/), with the package reflecting updates to .NET Core and .NET 6.
