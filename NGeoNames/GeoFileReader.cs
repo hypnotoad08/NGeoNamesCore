@@ -1,597 +1,378 @@
 ﻿using NGeoNames.Entities;
 using NGeoNames.Parsers;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using TimeZone = NGeoNames.Entities.TimeZone;
 
 namespace NGeoNames
 {
 	/// <summary>
-	/// Provides methods to read/parse files from geonames.org.
+	/// Provides methods to read/parse files from geonames.org asynchronously.
 	/// </summary>
 	public class GeoFileReader
 	{
 		/// <summary>
-		/// Reads records of type T, using the specified parser to parse the values.
+		/// Reads records of type T asynchronously, using the specified parser to parse the values.
 		/// </summary>
 		/// <typeparam name="T">The type of objects to read/parse.</typeparam>
 		/// <param name="path">The path of the file to read/parse.</param>
 		/// <param name="parser">The <see cref="IParser{T}"/> to use when reading the file.</param>
-		/// <returns>Returns an IEnumerable of T representing the records read/parsed.</returns>
-		/// <remarks>
-		/// This method will try to "autodetect" the filetype; it will 'recognize' .txt and .gz (or .*.gz) files
-		/// and act accordingly. If you use another extension you may want to explicitly specify the filetype
-		/// using the <see cref="ReadRecords{T}(string, FileType, IParser{T})"/> overload.
-		/// </remarks>
-		public IEnumerable<T> ReadRecords<T>(string path, IParser<T> parser)
+		/// <returns>Returns an IAsyncEnumerable of T representing the records read/parsed.</returns>
+		public async IAsyncEnumerable<T> ReadRecordsAsync<T>(string path, IParser<T> parser)
 		{
-			return ReadRecords(path, FileType.AutoDetect, parser);
-		}
-
-		/// <summary>
-		/// Reads records of type T, using the specified parser to parse the values.
-		/// </summary>
-		/// <typeparam name="T">The type of objects to read/parse.</typeparam>
-		/// <param name="path">The path of the file to read/parse.</param>
-		/// <param name="filetype">The <see cref="FileType"/> of the file.</param>
-		/// <param name="parser">The <see cref="IParser{T}"/> to use when reading the file.</param>
-		/// <returns>Returns an IEnumerable of T representing the records read/parsed.</returns>
-		public IEnumerable<T> ReadRecords<T>(string path, FileType filetype, IParser<T> parser)
-		{
-			using (var f = GetStream(path, filetype))
+			await foreach (var record in ReadRecordsAsync(path, FileType.AutoDetect, parser))
 			{
-				foreach (var r in ReadRecords(f, parser))
-					yield return r;
+				yield return record;
 			}
 		}
 
 		/// <summary>
-		/// Reads records of type T, using the specified parser to parse the values.
+		/// Reads records of type T asynchronously, using the specified parser to parse the values.
+		/// </summary>
+		/// <typeparam name="T">The type of objects to read/parse.</typeparam>
+		/// <param name="path">The path of the file to read/parse.</param>
+		/// <param name="fileType">The <see cref="FileType"/> of the file.</param>
+		/// <param name="parser">The <see cref="IParser{T}"/> to use when reading the file.</param>
+		/// <returns>Returns an IAsyncEnumerable of T representing the records read/parsed.</returns>
+		public async IAsyncEnumerable<T> ReadRecordsAsync<T>(string path, FileType fileType, IParser<T> parser)
+		{
+			await using var fileStream = await GetStreamAsync(path, fileType);
+			await foreach (var record in ReadRecordsAsync(fileStream, parser))
+			{
+				yield return record;
+			}
+		}
+
+		/// <summary>
+		/// Reads records of type T asynchronously from a stream, using the specified parser to parse the values.
 		/// </summary>
 		/// <typeparam name="T">The type of objects to read/parse.</typeparam>
 		/// <param name="stream">The <see cref="Stream"/> to read/parse.</param>
 		/// <param name="parser">The <see cref="IParser{T}"/> to use when reading the file.</param>
-		/// <returns>Returns an IEnumerable of T representing the records read/parsed.</returns>
-		public IEnumerable<T> ReadRecords<T>(Stream stream, IParser<T> parser)
+		/// <returns>Returns an IAsyncEnumerable of T representing the records read/parsed.</returns>
+		public async IAsyncEnumerable<T> ReadRecordsAsync<T>(Stream stream, IParser<T> parser)
 		{
-			using (var r = new StreamReader(stream, parser.Encoding))
+			using var reader = new StreamReader(stream, parser.Encoding);
+			string? line;
+			int lineCount = 0;
+
+			while ((line = await reader.ReadLineAsync()) is not null)
 			{
-				string line = null;
-				int c = 0;
-				char[] separators = parser.FieldSeparators.Clone() as char[];
-				while (!r.EndOfStream && (line = r.ReadLine()) != null)
+				lineCount++;
+
+				if (lineCount > parser.SkipLines && line.Length > 0 && (!parser.HasComments || !line.StartsWith('#')))
 				{
-					c++;
-					if ((c > parser.SkipLines) && (line.Length > 0) && (!parser.HasComments || (parser.HasComments && !line.StartsWith('#'))))
+					var data = line.Split(parser.FieldSeparators);
+					if (data.Length != parser.ExpectedNumberOfFields)
 					{
-						var data = line.Split(parser.FieldSeparators);
-						if (data.Length != parser.ExpectedNumberOfFields)
-							throw new ParserException(string.Format("Expected number of fields mismatch; expected: {0}, read: {1}, line: {2}", parser.ExpectedNumberOfFields, data.Length, c));
-						yield return parser.Parse(data);
+						throw new ParserException($"Expected {parser.ExpectedNumberOfFields} fields, but got {data.Length} on line {lineCount}.");
 					}
+
+					yield return parser.Parse(data);
 				}
 			}
 		}
 
-		private static Stream GetStream(string path, FileType filetype)
+		/// <summary>
+		/// Opens a file stream based on the file type asynchronously.
+		/// </summary>
+		private static async Task<Stream> GetStreamAsync(string path, FileType fileType)
 		{
-			var filestream = File.OpenRead(path);
+			var fileStream = File.OpenRead(path);
 
-			//Figure out how we're supposed to read the file
-			var readastype = filetype == FileType.AutoDetect ? FileUtil.GetFileTypeFromExtension(path) : filetype;
-			switch (readastype)
+			var detectedFileType = fileType == FileType.AutoDetect ? FileUtil.GetFileTypeFromExtension(path) : fileType;
+			return detectedFileType switch
 			{
-				case FileType.Plain:
-					return filestream;
+				FileType.Plain => fileStream,
+				FileType.GZip => new GZipStream(fileStream, CompressionMode.Decompress),
+				FileType.Zip => await OpenZipStreamAsync(fileStream),
+				_ => throw new NotSupportedException($"File type {detectedFileType} is not supported."),
+			};
+		}
 
-				case FileType.GZip:
-					return new GZipStream(filestream, CompressionMode.Decompress);
+		/// <summary>
+		/// Opens the first entry from a ZIP file asynchronously.
+		/// </summary>
+		private static Task<Stream> OpenZipStreamAsync(Stream fileStream)
+		{
+			var zipArchive = new ZipArchive(fileStream, ZipArchiveMode.Read);
+			var entry = zipArchive.Entries.First();
+			return Task.FromResult(entry.Open()); // Assumes single file inside the zip
+		}
 
-				case FileType.AutoDetect:
-					break;
+		#region Convenience Methods
+
+		/// <summary>
+		/// Reads <see cref="ExtendedGeoName"/> records asynchronously from the specified file.
+		/// </summary>
+		public static IAsyncEnumerable<ExtendedGeoName> ReadExtendedGeoNamesAsync(string filename)
+		{
+			return new GeoFileReader().ReadRecordsAsync(filename, new ExtendedGeoNameParser());
+		}
+
+		/// <summary>
+		/// Reads <see cref="ExtendedGeoName"/> records asynchronously from the specified stream.
+		/// </summary>
+		public static IAsyncEnumerable<ExtendedGeoName> ReadExtendedGeoNamesAsync(Stream stream)
+		{
+			return new GeoFileReader().ReadRecordsAsync(stream, new ExtendedGeoNameParser());
+		}
+
+		/// <summary>
+		/// Reads <see cref="GeoName"/> records asynchronously from the specified file.
+		/// </summary>
+		public static IAsyncEnumerable<GeoName> ReadGeoNamesAsync(string filename, bool useExtendedFileFormat = true)
+		{
+			return new GeoFileReader().ReadRecordsAsync(filename, new GeoNameParser(useExtendedFileFormat));
+		}
+
+		/// <summary>
+		/// Reads <see cref="GeoName"/> records asynchronously from the specified stream.
+		/// </summary>
+		public static IAsyncEnumerable<GeoName> ReadGeoNamesAsync(Stream stream, bool useExtendedFileFormat = true)
+		{
+			return new GeoFileReader().ReadRecordsAsync(stream, new GeoNameParser(useExtendedFileFormat));
+		}
+
+		/// <summary>
+		/// Reads <see cref="Admin1Code"/> records asynchronously from the specified file.
+		/// </summary>
+		public static IAsyncEnumerable<Admin1Code> ReadAdmin1CodesAsync(string filename)
+		{
+			return new GeoFileReader().ReadRecordsAsync(filename, new Admin1CodeParser());
+		}
+
+		/// <summary>
+		/// Reads <see cref="Admin1Code"/> records asynchronously from the specified stream.
+		/// </summary>
+		public static IAsyncEnumerable<Admin1Code> ReadAdmin1CodesAsync(Stream stream)
+		{
+			return new GeoFileReader().ReadRecordsAsync(stream, new Admin1CodeParser());
+		}
+
+		/// <summary>
+		/// Reads <see cref="Admin2Code"/> records asynchronously from the specified file.
+		/// </summary>
+		public static IAsyncEnumerable<Admin2Code> ReadAdmin2CodesAsync(string filename)
+		{
+			return new GeoFileReader().ReadRecordsAsync(filename, new Admin2CodeParser());
+		}
+
+		/// <summary>
+		/// Reads <see cref="Admin2Code"/> records asynchronously from the specified stream.
+		/// </summary>
+		public static IAsyncEnumerable<Admin2Code> ReadAdmin2CodesAsync(Stream stream)
+		{
+			return new GeoFileReader().ReadRecordsAsync(stream, new Admin2CodeParser());
+		}
+
+		/// <summary>
+		/// Reads <see cref="AlternateName"/> records asynchronously from the specified file.
+		/// </summary>
+		public static IAsyncEnumerable<AlternateName> ReadAlternateNamesAsync(string filename)
+		{
+			return new GeoFileReader().ReadRecordsAsync(filename, new AlternateNameParser());
+		}
+
+		/// <summary>
+		/// Reads <see cref="AlternateName"/> records asynchronously from the specified stream.
+		/// </summary>
+		public static IAsyncEnumerable<AlternateName> ReadAlternateNamesAsync(Stream stream)
+		{
+			return new GeoFileReader().ReadRecordsAsync(stream, new AlternateNameParser());
+		}
+
+		/// <summary>
+		/// Reads <see cref="AlternateNameV2"/> records asynchronously from the specified file.
+		/// </summary>
+		public static IAsyncEnumerable<AlternateNameV2> ReadAlternateNamesV2Async(string filename)
+		{
+			return new GeoFileReader().ReadRecordsAsync(filename, new AlternateNameParserV2());
+		}
+
+		/// <summary>
+		/// Reads <see cref="AlternateNameV2"/> records asynchronously from the specified stream.
+		/// </summary>
+		public static IAsyncEnumerable<AlternateNameV2> ReadAlternateNamesV2Async(Stream stream)
+		{
+			return new GeoFileReader().ReadRecordsAsync(stream, new AlternateNameParserV2());
+		}
+
+		/// <summary>
+		/// Reads <see cref="Continent"/> records asynchronously from the built-in data.
+		/// </summary>
+		public static IAsyncEnumerable<Continent> ReadBuiltInContinentsAsync()
+		{
+			return ReadBuiltInResourceAsync("continentCodes", new ContinentParser());
+		}
+
+		private static async IAsyncEnumerable<T> ReadBuiltInResourceAsync<T>(string name, IParser<T> parser)
+		{
+			var data = Properties.Resources.ResourceManager.GetString(name);
+			await using var memoryStream = new MemoryStream(parser.Encoding.GetBytes(data));
+			await foreach (var record in new GeoFileReader().ReadRecordsAsync(memoryStream, parser))
+			{
+				yield return record;
 			}
-			throw new System.NotSupportedException(string.Format("Filetype not supported: {0}", readastype));
-		}
-
-		#region Convenience methods
-
-		/// <summary>
-		/// Reads <see cref="ExtendedGeoName"/> records from the specified file, using the default <see cref="ExtendedGeoNameParser"/>.
-		/// </summary>
-		/// <param name="filename">The name/path of the file.</param>
-		/// <returns>Returns an IEnumerable of <see cref="ExtendedGeoName"/> representing the records read/parsed.</returns>
-		/// <remarks>
-		/// This static method is a convenience-method; see the ReadRecords{T} overloaded instance-methods for
-		/// more control over how the file is read.
-		/// </remarks>
-		public static IEnumerable<ExtendedGeoName> ReadExtendedGeoNames(string filename)
-		{
-			return new GeoFileReader().ReadRecords(filename, new ExtendedGeoNameParser());
 		}
 
 		/// <summary>
-		/// Reads <see cref="ExtendedGeoName"/> records from the <see cref="Stream"/>, using the default <see cref="ExtendedGeoNameParser"/>.
+		/// Reads <see cref="Continent"/> records asynchronously from the specified file.
 		/// </summary>
-		/// <param name="stream">The <see cref="Stream"/> to read/parse.</param>
-		/// <returns>Returns an IEnumerable of <see cref="ExtendedGeoName"/> representing the records read/parsed.</returns>
-		/// <remarks>
-		/// This static method is a convenience-method; see the ReadRecords{T} overloaded instance-methods for
-		/// more control over how the stream is read.
-		/// </remarks>
-		public static IEnumerable<ExtendedGeoName> ReadExtendedGeoNames(Stream stream)
+		public static IAsyncEnumerable<Continent> ReadContinentsAsync(string filename)
 		{
-			return new GeoFileReader().ReadRecords(stream, new ExtendedGeoNameParser());
+			return new GeoFileReader().ReadRecordsAsync(filename, new ContinentParser());
 		}
 
 		/// <summary>
-		/// Reads <see cref="GeoName"/> records from the specified file, using the default <see cref="GeoNameParser"/>.
+		/// Reads <see cref="Continent"/> records asynchronously from the specified stream.
 		/// </summary>
-		/// <param name="filename">The name/path of the file.</param>
-		/// <returns>Returns an IEnumerable of <see cref="GeoName"/> representing the records read/parsed.</returns>
-		/// <remarks>
-		/// This static method is a convenience-method; see the ReadRecords{T} overloaded instance-methods for
-		/// more control over how the file is read.
-		/// </remarks>
-		public static IEnumerable<GeoName> ReadGeoNames(string filename)
+		public static IAsyncEnumerable<Continent> ReadContinentsAsync(Stream stream)
 		{
-			return ReadGeoNames(filename, true);
+			return new GeoFileReader().ReadRecordsAsync(stream, new ContinentParser());
 		}
 
 		/// <summary>
-		/// Reads <see cref="GeoName"/> records from the <see cref="Stream"/>, using the default <see cref="GeoNameParser"/>.
+		/// Reads <see cref="CountryInfo"/> records asynchronously from the specified file.
 		/// </summary>
-		/// <param name="stream">The <see cref="Stream"/> to read/parse.</param>
-		/// <returns>Returns an IEnumerable of <see cref="GeoName"/> representing the records read/parsed.</returns>
-		/// <remarks>
-		/// This static method is a convenience-method; see the ReadRecords{T} overloaded instance-methods for
-		/// more control over how the stream is read.
-		/// </remarks>
-		public static IEnumerable<GeoName> ReadGeoNames(Stream stream)
+		public static IAsyncEnumerable<CountryInfo> ReadCountryInfoAsync(string filename)
 		{
-			return ReadGeoNames(stream, true);
+			return new GeoFileReader().ReadRecordsAsync(filename, new CountryInfoParser());
 		}
 
 		/// <summary>
-		/// Reads <see cref="GeoName"/> records from the specified file, using the default <see cref="GeoNameParser"/>.
+		/// Reads <see cref="CountryInfo"/> records asynchronously from the specified stream.
 		/// </summary>
-		/// <param name="filename">The name/path of the file.</param>
-		/// <param name="useextendedfileformat">
-		/// When this parameter is true (default) the 19 field format (default geonames.org file format) is assumed,
-		/// when this parameter is false a custom 4 field format (containing only Id, Name, Latitude and Longitude)
-		/// will be used.
-		/// </param>
-		/// <returns>Returns an IEnumerable of <see cref="GeoName"/> representing the records read/parsed.</returns>
-		/// <remarks>
-		/// This static method is a convenience-method; see the ReadRecords{T} overloaded instance-methods for
-		/// more control over how the file is read.
-		/// </remarks>
-		public static IEnumerable<GeoName> ReadGeoNames(string filename, bool useextendedfileformat)
+		public static IAsyncEnumerable<CountryInfo> ReadCountryInfoAsync(Stream stream)
 		{
-			return new GeoFileReader().ReadRecords(filename, new GeoNameParser(useextendedfileformat));
+			return new GeoFileReader().ReadRecordsAsync(stream, new CountryInfoParser());
 		}
 
 		/// <summary>
-		/// Reads <see cref="GeoName"/> records from the <see cref="Stream"/>, using the default <see cref="GeoNameParser"/>.
+		/// Reads <see cref="FeatureClass"/> records asynchronously from the built-in data.
 		/// </summary>
-		/// <param name="stream">The <see cref="Stream"/> to read/parse.</param>
-		/// <param name="useextendedfileformat">
-		/// When this parameter is true (default) the 19 field format (default geonames.org file format) is assumed,
-		/// when this parameter is false a custom 4 field format (containing only Id, Name, Latitude and Longitude)
-		/// will be used.
-		/// </param>
-		/// <returns>Returns an IEnumerable of <see cref="GeoName"/> representing the records read/parsed.</returns>
-		/// <remarks>
-		/// This static method is a convenience-method; see the ReadRecords{T} overloaded instance-methods for
-		/// more control over how the stream is read.
-		/// </remarks>
-		public static IEnumerable<GeoName> ReadGeoNames(Stream stream, bool useextendedfileformat)
+		public static IAsyncEnumerable<FeatureClass> ReadBuiltInFeatureClassesAsync()
 		{
-			return new GeoFileReader().ReadRecords(stream, new GeoNameParser(useextendedfileformat));
+			return ReadBuiltInResourceAsync("featureClasses_en", new FeatureClassParser());
 		}
 
 		/// <summary>
-		/// Reads <see cref="Admin1Code"/> records from the specified file, using the default <see cref="Admin1CodeParser"/>.
+		/// Reads <see cref="FeatureClass"/> records asynchronously from the specified file.
 		/// </summary>
-		/// <param name="filename">The name/path of the file.</param>
-		/// <returns>Returns an IEnumerable of <see cref="Admin1Code"/> representing the records read/parsed.</returns>
-		/// <remarks>
-		/// This static method is a convenience-method; see the ReadRecords{T} overloaded instance-methods for
-		/// more control over how the file is read.
-		/// </remarks>
-		public static IEnumerable<Admin1Code> ReadAdmin1Codes(string filename)
+		public static IAsyncEnumerable<FeatureClass> ReadFeatureClassesAsync(string filename)
 		{
-			return new GeoFileReader().ReadRecords(filename, new Admin1CodeParser());
+			return new GeoFileReader().ReadRecordsAsync(filename, new FeatureClassParser());
 		}
 
 		/// <summary>
-		/// Reads <see cref="Admin1Code"/> records from the <see cref="Stream"/>, using the default <see cref="Admin1CodeParser"/>.
+		/// Reads <see cref="FeatureClass"/> records asynchronously from the specified stream.
 		/// </summary>
-		/// <param name="stream">The <see cref="Stream"/> to read/parse.</param>
-		/// <returns>Returns an IEnumerable of <see cref="Admin1Code"/> representing the records read/parsed.</returns>
-		/// <remarks>
-		/// This static method is a convenience-method; see the ReadRecords{T} overloaded instance-methods for
-		/// more control over how the stream is read.
-		/// </remarks>
-		public static IEnumerable<Admin1Code> ReadAdmin1Codes(Stream stream)
+		public static IAsyncEnumerable<FeatureClass> ReadFeatureClassesAsync(Stream stream)
 		{
-			return new GeoFileReader().ReadRecords(stream, new Admin1CodeParser());
+			return new GeoFileReader().ReadRecordsAsync(stream, new FeatureClassParser());
 		}
 
 		/// <summary>
-		/// Reads <see cref="Admin2Code"/> records from the specified file, using the default <see cref="Admin2CodeParser"/>.
+		/// Reads <see cref="FeatureCode"/> records asynchronously from the specified file.
 		/// </summary>
-		/// <param name="filename">The name/path of the file.</param>
-		/// <returns>Returns an IEnumerable of <see cref="Admin2Code"/> representing the records read/parsed.</returns>
-		/// <remarks>
-		/// This static method is a convenience-method; see the ReadRecords{T} overloaded instance-methods for
-		/// more control over how the file is read.
-		/// </remarks>
-		public static IEnumerable<Admin2Code> ReadAdmin2Codes(string filename)
+		public static IAsyncEnumerable<FeatureCode> ReadFeatureCodesAsync(string filename)
 		{
-			return new GeoFileReader().ReadRecords(filename, new Admin2CodeParser());
+			return new GeoFileReader().ReadRecordsAsync(filename, new FeatureCodeParser());
 		}
 
 		/// <summary>
-		/// Reads <see cref="Admin2Code"/> records from the <see cref="Stream"/>, using the default <see cref="Admin2CodeParser"/>.
+		/// Reads <see cref="FeatureCode"/> records asynchronously from the specified stream.
 		/// </summary>
-		/// <param name="stream">The <see cref="Stream"/> to read/parse.</param>
-		/// <returns>Returns an IEnumerable of <see cref="Admin2Code"/> representing the records read/parsed.</returns>
-		/// <remarks>
-		/// This static method is a convenience-method; see the ReadRecords{T} overloaded instance-methods for
-		/// more control over how the stream is read.
-		/// </remarks>
-		public static IEnumerable<Admin2Code> ReadAdmin2Codes(Stream stream)
+		public static IAsyncEnumerable<FeatureCode> ReadFeatureCodesAsync(Stream stream)
 		{
-			return new GeoFileReader().ReadRecords(stream, new Admin2CodeParser());
+			return new GeoFileReader().ReadRecordsAsync(stream, new FeatureCodeParser());
 		}
 
 		/// <summary>
-		/// Reads <see cref="AlternateName"/> records from the specified file, using the default <see cref="AlternateNameParser"/>.
+		/// Reads <see cref="HierarchyNode"/> records asynchronously from the specified file.
 		/// </summary>
-		/// <param name="filename">The name/path of the file.</param>
-		/// <returns>Returns an IEnumerable of <see cref="AlternateName"/> representing the records read/parsed.</returns>
-		/// <remarks>
-		/// This static method is a convenience-method; see the ReadRecords{T} overloaded instance-methods for
-		/// more control over how the file is read.
-		/// </remarks>
-		public static IEnumerable<AlternateName> ReadAlternateNames(string filename)
+		public static IAsyncEnumerable<HierarchyNode> ReadHierarchyAsync(string filename)
 		{
-			return new GeoFileReader().ReadRecords(filename, new AlternateNameParser());
+			return new GeoFileReader().ReadRecordsAsync(filename, new HierarchyParser());
 		}
 
 		/// <summary>
-		/// Reads <see cref="AlternateName"/> records from the <see cref="Stream"/>, using the default <see cref="AlternateNameParser"/>.
+		/// Reads <see cref="HierarchyNode"/> records asynchronously from the specified stream.
 		/// </summary>
-		/// <param name="stream">The <see cref="Stream"/> to read/parse.</param>
-		/// <returns>Returns an IEnumerable of <see cref="AlternateName"/> representing the records read/parsed.</returns>
-		/// <remarks>
-		/// This static method is a convenience-method; see the ReadRecords{T} overloaded instance-methods for
-		/// more control over how the stream is read.
-		/// </remarks>
-		public static IEnumerable<AlternateName> ReadAlternateNames(Stream stream)
+		public static IAsyncEnumerable<HierarchyNode> ReadHierarchyAsync(Stream stream)
 		{
-			return new GeoFileReader().ReadRecords(stream, new AlternateNameParser());
+			return new GeoFileReader().ReadRecordsAsync(stream, new HierarchyParser());
 		}
 
 		/// <summary>
-		/// Reads <see cref="AlternateNameV2"/> records from the specified file, using the default <see cref="AlternateNameParserV2"/>.
+		/// Reads <see cref="ISOLanguageCode"/> records asynchronously from the specified file.
 		/// </summary>
-		/// <param name="filename">The name/path of the file.</param>
-		/// <returns>Returns an IEnumerable of <see cref="AlternateNameV2"/> representing the records read/parsed.</returns>
-		/// <remarks>
-		/// This static method is a convenience-method; see the ReadRecords{T} overloaded instance-methods for
-		/// more control over how the file is read.
-		/// </remarks>
-		public static IEnumerable<AlternateNameV2> ReadAlternateNamesV2(string filename)
+		public static IAsyncEnumerable<ISOLanguageCode> ReadISOLanguageCodesAsync(string filename)
 		{
-			return new GeoFileReader().ReadRecords(filename, new AlternateNameParserV2());
+			return new GeoFileReader().ReadRecordsAsync(filename, new ISOLanguageCodeParser());
 		}
 
 		/// <summary>
-		/// Reads <see cref="AlternateNameV2"/> records from the <see cref="Stream"/>, using the default <see cref="AlternateNameParserV2"/>.
+		/// Reads <see cref="ISOLanguageCode"/> records asynchronously from the specified stream.
 		/// </summary>
-		/// <param name="stream">The <see cref="Stream"/> to read/parse.</param>
-		/// <returns>Returns an IEnumerable of <see cref="AlternateNameV2"/> representing the records read/parsed.</returns>
-		/// <remarks>
-		/// This static method is a convenience-method; see the ReadRecords{T} overloaded instance-methods for
-		/// more control over how the stream is read.
-		/// </remarks>
-		public static IEnumerable<AlternateNameV2> ReadAlternateNamesV2(Stream stream)
+		public static IAsyncEnumerable<ISOLanguageCode> ReadISOLanguageCodesAsync(Stream stream)
 		{
-			return new GeoFileReader().ReadRecords(stream, new AlternateNameParserV2());
+			return new GeoFileReader().ReadRecordsAsync(stream, new ISOLanguageCodeParser());
 		}
 
 		/// <summary>
-		/// Reads <see cref="Continent"/> records from the built-in data, using the default <see cref="ContinentParser"/>.
+		/// Reads <see cref="TimeZone"/> records asynchronously from the specified file.
 		/// </summary>
-		/// <returns>Returns an IEnumerable of <see cref="Continent"/> representing the records read/parsed.</returns>
-		/// <remarks>
-		/// Geonames.org doesn't provide a file for continents; you can provide your own file (see
-		/// <see cref="ReadContinents(string)"/> or <see cref="ReadContinents(Stream)"/>) or use the built-in
-		/// values provided by this method.
-		/// </remarks>
-		public static IEnumerable<Continent> ReadBuiltInContinents()
+		public static IAsyncEnumerable<TimeZone> ReadTimeZonesAsync(string filename)
 		{
-			return ReadBuiltInResource("continentCodes", new ContinentParser());
-		}
-
-		private static IEnumerable<T> ReadBuiltInResource<T>(string name, IParser<T> parser)
-		{
-			using (var s = new MemoryStream(parser.Encoding.GetBytes(Properties.Resources.ResourceManager.GetString(name))))
-				foreach (var i in new GeoFileReader().ReadRecords(s, parser))
-					yield return i;
+			return new GeoFileReader().ReadRecordsAsync(filename, new TimeZoneParser());
 		}
 
 		/// <summary>
-		/// Reads <see cref="Continent"/> records from the specified file, using the default <see cref="ContinentParser"/>.
+		/// Reads <see cref="TimeZone"/> records asynchronously from the specified stream.
 		/// </summary>
-		/// <param name="filename">The name/path of the file.</param>
-		/// <returns>Returns an IEnumerable of <see cref="Continent"/> representing the records read/parsed.</returns>
-		/// <remarks>
-		/// This static method is a convenience-method; see the ReadRecords{T} overloaded instance-methods for
-		/// more control over how the file is read.
-		/// </remarks>
-		/// <seealso cref="ReadBuiltInContinents"/>
-		public static IEnumerable<Continent> ReadContinents(string filename)
+		public static IAsyncEnumerable<TimeZone> ReadTimeZonesAsync(Stream stream)
 		{
-			return new GeoFileReader().ReadRecords(filename, new ContinentParser());
+			return new GeoFileReader().ReadRecordsAsync(stream, new TimeZoneParser());
 		}
 
 		/// <summary>
-		/// Reads <see cref="Continent"/> records from the <see cref="Stream"/>, using the default <see cref="ContinentParser"/>.
+		/// Reads <see cref="UserTag"/> records asynchronously from the specified file.
 		/// </summary>
-		/// <param name="stream">The <see cref="Stream"/> to read/parse.</param>
-		/// <returns>Returns an IEnumerable of <see cref="Continent"/> representing the records read/parsed.</returns>
-		/// <remarks>
-		/// This static method is a convenience-method; see the ReadRecords{T} overloaded instance-methods for
-		/// more control over how the stream is read.
-		/// </remarks>
-		/// <seealso cref="ReadBuiltInContinents"/>
-		public static IEnumerable<Continent> ReadContinents(Stream stream)
+		public static IAsyncEnumerable<UserTag> ReadUserTagsAsync(string filename)
 		{
-			return new GeoFileReader().ReadRecords(stream, new ContinentParser());
+			return new GeoFileReader().ReadRecordsAsync(filename, new UserTagParser());
 		}
 
 		/// <summary>
-		/// Reads <see cref="CountryInfo"/> records from the specified file, using the default <see cref="CountryInfoParser"/>.
+		/// Reads <see cref="UserTag"/> records asynchronously from the specified stream.
 		/// </summary>
-		/// <param name="filename">The name/path of the file.</param>
-		/// <returns>Returns an IEnumerable of <see cref="CountryInfo"/> representing the records read/parsed.</returns>
-		/// <remarks>
-		/// This static method is a convenience-method; see the ReadRecords{T} overloaded instance-methods for
-		/// more control over how the file is read.
-		/// </remarks>
-		public static IEnumerable<CountryInfo> ReadCountryInfo(string filename)
+		public static IAsyncEnumerable<UserTag> ReadUserTagsAsync(Stream stream)
 		{
-			return new GeoFileReader().ReadRecords(filename, new CountryInfoParser());
+			return new GeoFileReader().ReadRecordsAsync(stream, new UserTagParser());
 		}
 
 		/// <summary>
-		/// Reads <see cref="CountryInfo"/> records from the <see cref="Stream"/>, using the default <see cref="CountryInfoParser"/>.
+		/// Reads <see cref="Postalcode"/> records asynchronously from the specified file.
 		/// </summary>
-		/// <param name="stream">The <see cref="Stream"/> to read/parse.</param>
-		/// <returns>Returns an IEnumerable of <see cref="CountryInfo"/> representing the records read/parsed.</returns>
-		/// <remarks>
-		/// This static method is a convenience-method; see the ReadRecords{T} overloaded instance-methods for
-		/// more control over how the stream is read.
-		/// </remarks>
-		public static IEnumerable<CountryInfo> ReadCountryInfo(Stream stream)
+		public static IAsyncEnumerable<Postalcode> ReadPostalcodesAsync(string filename)
 		{
-			return new GeoFileReader().ReadRecords(stream, new CountryInfoParser());
+			return new GeoFileReader().ReadRecordsAsync(filename, new PostalcodeParser());
 		}
 
 		/// <summary>
-		/// Reads <see cref="FeatureClass"/> records from the built-in data, using the default <see cref="FeatureClassParser"/>.
+		/// Reads <see cref="Postalcode"/> records asynchronously from the specified stream.
 		/// </summary>
-		/// <returns>Returns an IEnumerable of <see cref="FeatureClass"/> representing the records read/parsed.</returns>
-		/// <remarks>
-		/// Geonames.org doesn't provide a file for featueclasses; you can provide your own file (see
-		/// <see cref="ReadFeatureClasses(string)"/> or <see cref="ReadFeatureClasses(Stream)"/>) or use the built-in
-		/// values provided by this method.
-		/// </remarks>
-		public static IEnumerable<FeatureClass> ReadBuiltInFeatureClasses()
+		public static IAsyncEnumerable<Postalcode> ReadPostalcodesAsync(Stream stream)
 		{
-			return ReadBuiltInResource("featureClasses_en", new FeatureClassParser());
+			return new GeoFileReader().ReadRecordsAsync(stream, new PostalcodeParser());
 		}
 
-		/// <summary>
-		/// Reads <see cref="FeatureClass"/> records from the specified file, using the default <see cref="FeatureClassParser"/>.
-		/// </summary>
-		/// <param name="filename">The name/path of the file.</param>
-		/// <returns>Returns an IEnumerable of <see cref="FeatureClass"/> representing the records read/parsed.</returns>
-		/// <remarks>
-		/// This static method is a convenience-method; see the ReadRecords{T} overloaded instance-methods for
-		/// more control over how the file is read.
-		/// </remarks>
-		/// <seealso cref="ReadBuiltInFeatureClasses"/>
-		public static IEnumerable<FeatureClass> ReadFeatureClasses(string filename)
-		{
-			return new GeoFileReader().ReadRecords(filename, new FeatureClassParser());
-		}
-
-		/// <summary>
-		/// Reads <see cref="FeatureClass"/> records from the <see cref="Stream"/>, using the default <see cref="FeatureClassParser"/>.
-		/// </summary>
-		/// <param name="stream">The <see cref="Stream"/> to read/parse.</param>
-		/// <returns>Returns an IEnumerable of <see cref="FeatureClass"/> representing the records read/parsed.</returns>
-		/// <remarks>
-		/// This static method is a convenience-method; see the ReadRecords{T} overloaded instance-methods for
-		/// more control over how the stream is read.
-		/// </remarks>
-		/// <seealso cref="ReadBuiltInFeatureClasses"/>
-		public static IEnumerable<FeatureClass> ReadFeatureClasses(Stream stream)
-		{
-			return new GeoFileReader().ReadRecords(stream, new FeatureClassParser());
-		}
-
-		/// <summary>
-		/// Reads <see cref="FeatureCode"/> records from the specified file, using the default <see cref="FeatureCodeParser"/>.
-		/// </summary>
-		/// <param name="filename">The name/path of the file.</param>
-		/// <returns>Returns an IEnumerable of <see cref="FeatureCode"/> representing the records read/parsed.</returns>
-		/// <remarks>
-		/// This static method is a convenience-method; see the ReadRecords{T} overloaded instance-methods for
-		/// more control over how the file is read.
-		/// </remarks>
-		public static IEnumerable<FeatureCode> ReadFeatureCodes(string filename)
-		{
-			return new GeoFileReader().ReadRecords(filename, new FeatureCodeParser());
-		}
-
-		/// <summary>
-		/// Reads <see cref="FeatureCode"/> records from the <see cref="Stream"/>, using the default <see cref="FeatureCodeParser"/>.
-		/// </summary>
-		/// <param name="stream">The <see cref="Stream"/> to read/parse.</param>
-		/// <returns>Returns an IEnumerable of <see cref="FeatureCode"/> representing the records read/parsed.</returns>
-		/// <remarks>
-		/// This static method is a convenience-method; see the ReadRecords{T} overloaded instance-methods for
-		/// more control over how the stream is read.
-		/// </remarks>
-		public static IEnumerable<FeatureCode> ReadFeatureCodes(Stream stream)
-		{
-			return new GeoFileReader().ReadRecords(stream, new FeatureCodeParser());
-		}
-
-		/// <summary>
-		/// Reads <see cref="HierarchyNode"/> records from the specified file, using the default <see cref="HierarchyParser"/>.
-		/// </summary>
-		/// <param name="filename">The name/path of the file.</param>
-		/// <returns>Returns an IEnumerable of <see cref="HierarchyNode"/> representing the records read/parsed.</returns>
-		/// <remarks>
-		/// This static method is a convenience-method; see the ReadRecords{T} overloaded instance-methods for
-		/// more control over how the file is read.
-		/// </remarks>
-		public static IEnumerable<HierarchyNode> ReadHierarchy(string filename)
-		{
-			return new GeoFileReader().ReadRecords(filename, new HierarchyParser());
-		}
-
-		/// <summary>
-		/// Reads <see cref="HierarchyNode"/> records from the <see cref="Stream"/>, using the default <see cref="HierarchyParser"/>.
-		/// </summary>
-		/// <param name="stream">The <see cref="Stream"/> to read/parse.</param>
-		/// <returns>Returns an IEnumerable of <see cref="HierarchyNode"/> representing the records read/parsed.</returns>
-		/// <remarks>
-		/// This static method is a convenience-method; see the ReadRecords{T} overloaded instance-methods for
-		/// more control over how the stream is read.
-		/// </remarks>
-		public static IEnumerable<HierarchyNode> ReadHierarchy(Stream stream)
-		{
-			return new GeoFileReader().ReadRecords(stream, new HierarchyParser());
-		}
-
-		/// <summary>
-		/// Reads <see cref="ISOLanguageCode"/> records from the specified file, using the default <see cref="ISOLanguageCodeParser"/>.
-		/// </summary>
-		/// <param name="filename">The name/path of the file.</param>
-		/// <returns>Returns an IEnumerable of <see cref="ISOLanguageCode"/> representing the records read/parsed.</returns>
-		/// <remarks>
-		/// This static method is a convenience-method; see the ReadRecords{T} overloaded instance-methods for
-		/// more control over how the file is read.
-		/// </remarks>
-		public static IEnumerable<ISOLanguageCode> ReadISOLanguageCodes(string filename)
-		{
-			return new GeoFileReader().ReadRecords(filename, new ISOLanguageCodeParser());
-		}
-
-		/// <summary>
-		/// Reads <see cref="ISOLanguageCode"/> records from the <see cref="Stream"/>, using the default <see cref="ISOLanguageCodeParser"/>.
-		/// </summary>
-		/// <param name="stream">The <see cref="Stream"/> to read/parse.</param>
-		/// <returns>Returns an IEnumerable of <see cref="ISOLanguageCode"/> representing the records read/parsed.</returns>
-		/// <remarks>
-		/// This static method is a convenience-method; see the ReadRecords{T} overloaded instance-methods for
-		/// more control over how the stream is read.
-		/// </remarks>
-		public static IEnumerable<ISOLanguageCode> ReadISOLanguageCodes(Stream stream)
-		{
-			return new GeoFileReader().ReadRecords(stream, new ISOLanguageCodeParser());
-		}
-
-		/// <summary>
-		/// Reads <see cref="TimeZone"/> records from the specified file, using the default <see cref="TimeZoneParser"/>.
-		/// </summary>
-		/// <param name="filename">The name/path of the file.</param>
-		/// <returns>Returns an IEnumerable of <see cref="TimeZone"/> representing the records read/parsed.</returns>
-		/// <remarks>
-		/// This static method is a convenience-method; see the ReadRecords{T} overloaded instance-methods for
-		/// more control over how the file is read.
-		/// </remarks>
-		public static IEnumerable<TimeZone> ReadTimeZones(string filename)
-		{
-			return new GeoFileReader().ReadRecords(filename, new TimeZoneParser());
-		}
-
-		/// <summary>
-		/// Reads <see cref="TimeZone"/> records from the <see cref="Stream"/>, using the default <see cref="TimeZoneParser"/>.
-		/// </summary>
-		/// <param name="stream">The <see cref="Stream"/> to read/parse.</param>
-		/// <returns>Returns an IEnumerable of <see cref="TimeZone"/> representing the records read/parsed.</returns>
-		/// <remarks>
-		/// This static method is a convenience-method; see the ReadRecords{T} overloaded instance-methods for
-		/// more control over how the stream is read.
-		/// </remarks>
-		public static IEnumerable<TimeZone> ReadTimeZones(Stream stream)
-		{
-			return new GeoFileReader().ReadRecords(stream, new TimeZoneParser());
-		}
-
-		/// <summary>
-		/// Reads <see cref="UserTag"/> records from the specified file, using the default <see cref="UserTagParser"/>.
-		/// </summary>
-		/// <param name="filename">The name/path of the file.</param>
-		/// <returns>Returns an IEnumerable of <see cref="UserTag"/> representing the records read/parsed.</returns>
-		/// <remarks>
-		/// This static method is a convenience-method; see the ReadRecords{T} overloaded instance-methods for
-		/// more control over how the file is read.
-		/// </remarks>
-		public static IEnumerable<UserTag> ReadUserTags(string filename)
-		{
-			return new GeoFileReader().ReadRecords(filename, new UserTagParser());
-		}
-
-		/// <summary>
-		/// Reads <see cref="UserTag"/> records from the <see cref="Stream"/>, using the default <see cref="UserTagParser"/>.
-		/// </summary>
-		/// <param name="stream">The <see cref="Stream"/> to read/parse.</param>
-		/// <returns>Returns an IEnumerable of <see cref="UserTag"/> representing the records read/parsed.</returns>
-		/// <remarks>
-		/// This static method is a convenience-method; see the ReadRecords{T} overloaded instance-methods for
-		/// more control over how the stream is read.
-		/// </remarks>
-		public static IEnumerable<UserTag> ReadUserTags(Stream stream)
-		{
-			return new GeoFileReader().ReadRecords(stream, new UserTagParser());
-		}
-
-		/// <summary>
-		/// Reads <see cref="Postalcode"/> records from the specified file, using the default <see cref="PostalcodeParser"/>.
-		/// </summary>
-		/// <param name="filename">The name/path of the file.</param>
-		/// <returns>Returns an IEnumerable of <see cref="Postalcode"/> representing the records read/parsed.</returns>
-		/// <remarks>
-		/// This static method is a convenience-method; see the ReadRecords{T} overloaded instance-methods for
-		/// more control over how the file is read.
-		/// </remarks>
-		public static IEnumerable<Postalcode> ReadPostalcodes(string filename)
-		{
-			return new GeoFileReader().ReadRecords(filename, new PostalcodeParser());
-		}
-
-		/// <summary>
-		/// Reads <see cref="Postalcode"/> records from the <see cref="Stream"/>, using the default <see cref="PostalcodeParser"/>.
-		/// </summary>
-		/// <param name="stream">The <see cref="Stream"/> to read/parse.</param>
-		/// <returns>Returns an IEnumerable of <see cref="Postalcode"/> representing the records read/parsed.</returns>
-		/// <remarks>
-		/// This static method is a convenience-method; see the ReadRecords{T} overloaded instance-methods for
-		/// more control over how the stream is read.
-		/// </remarks>
-		public static IEnumerable<Postalcode> ReadPostalcodes(Stream stream)
-		{
-			return new GeoFileReader().ReadRecords(stream, new PostalcodeParser());
-		}
-
-		#endregion Convenience methods
+		#endregion Convenience Methods
 	}
 }

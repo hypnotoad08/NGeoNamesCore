@@ -1,215 +1,236 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NGeoNames;
+using System.IO;
 using System.Linq;
+using System.Net.Security;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace NGeoNamesTests
 {
-    [TestClass]
-    public class ComposerTests
-    {
-        [TestMethod]
-        public void Admin1CodesComposer_ComposesFileCorrectly()
-        {
-            var src = @"testdata\test_admin1CodesASCII.txt";
-            var dst = @"testdata\test_admin1CodesASCII.out.txt";
+	[TestClass]
+	public class ComposerTests
+	{
+		[TestMethod]
+		public async Task Admin1CodesComposer_ComposesFileCorrectly()
+		{
+			var src = @"testdata\test_admin1CodesASCII.txt";
+			var dst = @"testdata\test_admin1CodesASCII.out.txt";
 
-            GeoFileWriter.WriteAdmin1Codes(dst, GeoFileReader.ReadAdmin1Codes(src));
+			await GeoFileWriter.WriteAdmin1CodesAsync(dst, await GeoFileReader.ReadAdmin1CodesAsync(src).ToListAsync());
 
-            FileUtil.EnsureFilesAreFunctionallyEqual(src, dst, 4, 0, new[] { '\t' }, Encoding.UTF8, false);
-        }
+			FileUtil.EnsureFilesAreFunctionallyEqual(src, dst, 4, 0, new[] { '\t' }, Encoding.UTF8, false);
+		}
 
-        [TestMethod]
-        public void Admin2CodesComposer_ComposesFileCorrectly()
-        {
-            var src = @"testdata\test_admin2Codes.txt";
-            var dst = @"testdata\test_admin2Codes.out.txt";
+		[TestMethod]
+		public async Task Admin2CodesComposer_ComposesFileCorrectly()
+		{
+			var src = @"testdata\test_admin2Codes.txt";
+			var dst = @"testdata\test_admin2Codes.out.txt";
 
-            GeoFileWriter.WriteAdmin2Codes(dst, GeoFileReader.ReadAdmin2Codes(src));
+			await GeoFileWriter.WriteAdmin2CodesAsync(dst, await GeoFileReader.ReadAdmin2CodesAsync(src).ToListAsync());
 
-            FileUtil.EnsureFilesAreFunctionallyEqual(src, dst, 4, 0, new[] { '\t' }, Encoding.UTF8, false);
-        }
+			FileUtil.EnsureFilesAreFunctionallyEqual(src, dst, 4, 0, new[] { '\t' }, Encoding.UTF8, false);
+		}
 
-        [TestMethod]
-        public void AlternateNamesComposer_ComposesFileCorrectly()
-        {
-            var src = @"testdata\test_alternateNames.txt";
-            var dst = @"testdata\test_alternateNames.out.txt";
+		[TestMethod]
+		public async Task AlternateNamesComposer_ComposesFileCorrectly()
+		{
+			var src = @"testdata\test_alternateNames.txt";
+			var dst = @"testdata\test_alternateNames.out.txt";
 
-            GeoFileWriter.WriteAlternateNames(dst, GeoFileReader.ReadAlternateNames(src));
+			await GeoFileWriter.WriteAlternateNamesAsync(dst, await GeoFileReader.ReadAlternateNamesAsync(src).ToListAsync());
 
-            FileUtil.EnsureFilesAreFunctionallyEqual(src, dst, 8, 0, new[] { '\t' }, Encoding.UTF8, false);
-        }
+			FileUtil.EnsureFilesAreFunctionallyEqual(src, dst, 8, 0, new[] { '\t' }, Encoding.UTF8, false);
+		}
 
-        [TestMethod]
-        public void AlternateNamesComposerV2_ComposesFileCorrectly()
-        {
-            var src = @"testdata\test_alternateNamesV2.txt";
-            var dst = @"testdata\test_alternateNamesV2.out.txt";
+		[TestMethod]
+		public async Task AlternateNamesComposerV2_ComposesFileCorrectly()
+		{
+			var src = @"testdata\test_alternateNamesV2.txt";
+			var dst = @"testdata\test_alternateNamesV2.out.txt";
 
-            GeoFileWriter.WriteAlternateNamesV2(dst, GeoFileReader.ReadAlternateNamesV2(src));
+			await GeoFileWriter.WriteAlternateNamesV2Async(dst, await GeoFileReader.ReadAlternateNamesV2Async(src).ToListAsync());
 
-            FileUtil.EnsureFilesAreFunctionallyEqual(src, dst, 10, 0, new[] { '\t' }, Encoding.UTF8, false);
-        }
+			FileUtil.EnsureFilesAreFunctionallyEqual(src, dst, 10, 0, new[] { '\t' }, Encoding.UTF8, false);
+		}
 
-        [TestMethod]
-        public void ContinentComposer_ComposesFileCorrectly()
-        {
-            var src = @"testdata\test_continentCodes.txt";
-            var dst = @"testdata\test_continentCodes.out.txt";
+		[TestMethod]
+		public async Task ContinentComposer_ComposesFileCorrectly()
+		{
+			var src = @"testdata\test_continentCodes.txt";
+			var dst = @"testdata\test_continentCodes.out.txt";
 
-            GeoFileWriter.WriteContinents(dst, GeoFileReader.ReadContinents(src));
+			await GeoFileWriter.WriteContinentsAsync(dst, await GeoFileReader.ReadContinentsAsync(src).ToListAsync());
 
-            FileUtil.EnsureFilesAreFunctionallyEqual(src, dst, 3, 0, new[] { '\t' }, Encoding.UTF8, true);
-        }
+			FileUtil.EnsureFilesAreFunctionallyEqual(src, dst, 3, 0, new[] { '\t' }, Encoding.UTF8, true);
+		}
 
-        [TestMethod]
-        public void CountryInfoComposer_ComposesFileCorrectly()
-        {
-            // We use a *slightly* different file (test_countryInfo2 instead of test_countryInfo) because the
-            // CountryInfoParser "fixes" phonenumbers with a missing + (e.g. 31 vs. +31); this way the files
-            // would always differ; test_countryInfo2 has these values fixed
-            var src = @"testdata\test_countryInfo2.txt";
-            var dst = @"testdata\test_countryInfo2.out.txt";
+		[TestMethod]
+		public async Task CountryInfoComposer_ComposesFileCorrectly()
+		{
+			var src = @"testdata\test_countryInfo2.txt";
+			var dst = @"testdata\test_countryInfo2.out.txt";
 
-            GeoFileWriter.WriteCountryInfo(dst, GeoFileReader.ReadCountryInfo(src));
+			await GeoFileWriter.WriteCountryInfoAsync(dst, await GeoFileReader.ReadCountryInfoAsync(src).ToListAsync());
 
-            FileUtil.EnsureFilesAreFunctionallyEqual(src, dst, 19, 0, new[] { '\t' }, Encoding.UTF8, true);
-        }
+			FileUtil.EnsureFilesAreFunctionallyEqual(src, dst, 19, 0, new[] { '\t' }, Encoding.UTF8, true);
+		}
 
-        [TestMethod]
-        public void ExtendedGeoNamesComposer_ComposesFileCorrectly()
-        {
-            var src = @"testdata\test_extendedgeonames.txt";
-            var dst = @"testdata\test_extendedgeonames.out.txt";
+		[TestMethod]
+		public async Task ExtendedGeoNamesComposer_ComposesFileCorrectly()
+		{
+			var src = @"testdata\test_extendedgeonames.txt";
+			var dst = @"testdata\test_extendedgeonames.out.txt";
 
-            GeoFileWriter.WriteExtendedGeoNames(dst, GeoFileReader.ReadExtendedGeoNames(src));
+			await GeoFileWriter.WriteExtendedGeoNamesAsync(dst, await GeoFileReader.ReadExtendedGeoNamesAsync(src).ToListAsync());
 
-            FileUtil.EnsureFilesAreFunctionallyEqual(src, dst, 19, 0, new[] { '\t' }, Encoding.UTF8, false);
-        }
+			FileUtil.EnsureFilesAreFunctionallyEqual(src, dst, 19, 0, new[] { '\t' }, Encoding.UTF8, false);
+		}
 
-        [TestMethod]
-        public void FeatureClassComposer_ComposesFileCorrectly()
-        {
-            var src = @"testdata\test_featureClasses_en.txt";
-            var dst = @"testdata\test_featureClasses_en.out.txt";
+		[TestMethod]
+		public async Task FeatureClassComposer_ComposesFileCorrectly()
+		{
+			var src = @"testdata\test_featureClasses_en.txt";
+			var dst = @"testdata\test_featureClasses_en.out.txt";
 
-            GeoFileWriter.WriteFeatureClasses(dst, GeoFileReader.ReadFeatureClasses(src));
+			await GeoFileWriter.WriteFeatureClassesAsync(dst, await GeoFileReader.ReadFeatureClassesAsync(src).ToListAsync());
 
-            FileUtil.EnsureFilesAreFunctionallyEqual(src, dst, 2, 0, new[] { '\t' }, Encoding.UTF8, true);
-        }
+			FileUtil.EnsureFilesAreFunctionallyEqual(src, dst, 2, 0, new[] { '\t' }, Encoding.UTF8, true);
+		}
 
-        [TestMethod]
-        public void FeatureCodeComposer_ComposesFileCorrectly()
-        {
-            var src = @"testdata\test_featureCodes_en.txt";
-            var dst = @"testdata\test_featureCodes_en.out.txt";
+		[TestMethod]
+		public async Task FeatureCodeComposer_ComposesFileCorrectly()
+		{
+			var src = @"testdata\test_featureCodes_en.txt";
+			var dst = @"testdata\test_featureCodes_en.out.txt";
 
-            GeoFileWriter.WriteFeatureCodes(dst, GeoFileReader.ReadFeatureCodes(src));
+			await GeoFileWriter.WriteFeatureCodesAsync(dst, await GeoFileReader.ReadFeatureCodesAsync(src).ToListAsync());
 
-            FileUtil.EnsureFilesAreFunctionallyEqual(src, dst, 3, 0, new[] { '\t' }, Encoding.UTF8, true);
-        }
+			FileUtil.EnsureFilesAreFunctionallyEqual(src, dst, 3, 0, new[] { '\t' }, Encoding.UTF8, true);
+		}
 
-        [TestMethod]
-        public void GeoNamesComposerSimple_ComposesFileCorrectly()
-        {
-            // In this test we test the "compact file format" (e.g. GeoName, not ExtendedGeoName)
-            var src = @"testdata\test_geonames_simple.txt";
-            var dst = @"testdata\test_geonames_simple.out.txt";
+		[TestMethod]
+		public async Task GeoNamesComposerSimple_ComposesFileCorrectly()
+		{
+			// In this test we test the "compact file format" (e.g. GeoName, not ExtendedGeoName)
+			var src = @"testdata\test_geonames_simple.txt";
+			var dst = @"testdata\test_geonames_simple.out.txt";
 
-            GeoFileWriter.WriteGeoNames(dst, GeoFileReader.ReadGeoNames(src, false), false);
+			using (var srcStream = new FileStream(src, FileMode.Open, FileAccess.Read))
+			{
+				var geoNames = await GeoFileReader.ReadGeoNamesAsync(srcStream, false).ToListAsync();
+				using (var dstStream = new FileStream(dst, FileMode.Create, FileAccess.Write))
+				{
+					await GeoFileWriter.WriteGeoNamesAsync(dstStream, geoNames, false);
+				}
+			}
 
-            FileUtil.EnsureFilesAreFunctionallyEqual(src, dst, 4, 0, new[] { '\t' }, Encoding.UTF8, false);
-        }
+			FileUtil.EnsureFilesAreFunctionallyEqual(src, dst, 4, 0, new[] { '\t' }, Encoding.UTF8, false);
+		}
 
-        [TestMethod]
-        public void GeoNamesComposerExtended_ComposesFileCorrectly()
-        {
-            // In this test we test the "extended file format" (e.g. ExtendedGeoName, not GeoName)
-            // But since GeoName cannot provide all values, all other properties should be null/empty when writing
-            var src = @"testdata\test_geonames_ext.txt";
-            var dst = @"testdata\test_geonames_ext.out.txt";
+		[TestMethod]
+		public async Task GeoNamesComposerSimple_ComposesFileCorrectlyAsync()
+		{
+			// In this test, we test the "compact file format" (e.g. GeoName, not ExtendedGeoName)
+			var src = @"testdata\test_geonames_simple.txt";
+			var dst = @"testdata\test_geonames_simple.out.txt";
 
-            GeoFileWriter.WriteGeoNames(dst, GeoFileReader.ReadGeoNames(src, true), true);
+			// Reading and writing the file asynchronously
+			var geoNames = await GeoFileReader.ReadGeoNamesAsync(src, false).ToListAsync();
 
-            FileUtil.EnsureFilesAreFunctionallyEqual(src, dst, 19, 0, new[] { '\t' }, Encoding.UTF8, false);
-        }
+			using (var stream = new FileStream(dst, FileMode.Create, FileAccess.Write))
+			{
+				await GeoFileWriter.WriteGeoNamesAsync(stream, geoNames, false);
+			}
 
-        [TestMethod]
-        public void HierarchyComposer_ComposesFileCorrectly()
-        {
-            var src = @"testdata\test_hierarchy.txt";
-            var dst = @"testdata\test_hierarchy.out.txt";
+			// Ensure both files (src and dst) are functionally equal
+			FileUtil.EnsureFilesAreFunctionallyEqual(src, dst, 4, 0, new[] { '\t' }, Encoding.UTF8, false);
+		}
 
-            GeoFileWriter.WriteHierarchy(dst, GeoFileReader.ReadHierarchy(src));
+		[TestMethod]
+		public async Task HierarchyComposer_ComposesFileCorrectly()
+		{
+			var src = @"testdata\test_hierarchy.txt";
+			var dst = @"testdata\test_hierarchy.out.txt";
 
-            FileUtil.EnsureFilesAreFunctionallyEqual(src, dst, 3, 0, new[] { '\t' }, Encoding.UTF8, false);
-        }
+			await GeoFileWriter.WriteHierarchyAsync(dst, await GeoFileReader.ReadHierarchyAsync(src).ToListAsync());
 
-        [TestMethod]
-        public void ISOLanguageCodeComposer_ComposesFileCorrectly()
-        {
-            var src = @"testdata\test_iso-languagecodes.txt";
-            var dst = @"testdata\test_iso-languagecodes.out.txt";
+			FileUtil.EnsureFilesAreFunctionallyEqual(src, dst, 3, 0, new[] { '\t' }, Encoding.UTF8, false);
+		}
 
-            GeoFileWriter.WriteISOLanguageCodes(dst, GeoFileReader.ReadISOLanguageCodes(src));
+		[TestMethod]
+		public async Task ISOLanguageCodeComposer_ComposesFileCorrectly()
+		{
+			var src = @"testdata\test_iso-languagecodes.txt";
+			var dst = @"testdata\test_iso-languagecodes.out.txt";
 
-            FileUtil.EnsureFilesAreFunctionallyEqual(src, dst, 4, 1, new[] { '\t' }, Encoding.UTF8, false);
-        }
+			await GeoFileWriter.WriteISOLanguageCodesAsync(dst, await GeoFileReader.ReadISOLanguageCodesAsync(src).ToListAsync());
 
-        [TestMethod]
-        public void TimeZoneComposer_ComposesFileCorrectly()
-        {
-            var src = @"testdata\test_timeZones.txt";
-            var dst = @"testdata\test_timeZones.out.txt";
+			FileUtil.EnsureFilesAreFunctionallyEqual(src, dst, 4, 1, new[] { '\t' }, Encoding.UTF8, false);
+		}
 
-            GeoFileWriter.WriteTimeZones(dst, GeoFileReader.ReadTimeZones(src));
+		[TestMethod]
+		public async Task TimeZoneComposer_ComposesFileCorrectly()
+		{
+			var src = @"testdata\test_timeZones.txt";
+			var dst = @"testdata\test_timeZones.out.txt";
 
-            FileUtil.EnsureFilesAreFunctionallyEqual(src, dst, 5, 1, new[] { '\t' }, Encoding.UTF8, false);
-        }
+			await GeoFileWriter.WriteTimeZonesAsync(dst, await GeoFileReader.ReadTimeZonesAsync(src).ToListAsync());
 
-        [TestMethod]
-        public void UserTagComposer_ComposesFileCorrectly()
-        {
-            var src = @"testdata\test_userTags.txt";
-            var dst = @"testdata\test_userTags.out.txt";
+			FileUtil.EnsureFilesAreFunctionallyEqual(src, dst, 5, 1, new[] { '\t' }, Encoding.UTF8, false);
+		}
 
-            GeoFileWriter.WriteUserTags(dst, GeoFileReader.ReadUserTags(src));
+		[TestMethod]
+		public async Task UserTagComposer_ComposesFileCorrectly()
+		{
+			var src = @"testdata\test_userTags.txt";
+			var dst = @"testdata\test_userTags.out.txt";
 
-            FileUtil.EnsureFilesAreFunctionallyEqual(src, dst, 2, 0, new[] { '\t' }, Encoding.UTF8, false);
-        }
+			await GeoFileWriter.WriteUserTagsAsync(dst, await GeoFileReader.ReadUserTagsAsync(src).ToListAsync());
 
-        [TestMethod]
-        public void PostalcodeComposer_ComposesFileCorrectly()
-        {
-            var src = @"testdata\test_postalCodes.txt";
-            var dst = @"testdata\test_postalCodes.out.txt";
+			FileUtil.EnsureFilesAreFunctionallyEqual(src, dst, 2, 0, new[] { '\t' }, Encoding.UTF8, false);
+		}
 
-            GeoFileWriter.WritePostalcodes(dst, GeoFileReader.ReadPostalcodes(src));
+		[TestMethod]
+		public async Task PostalcodeComposer_ComposesFileCorrectly()
+		{
+			var src = @"testdata\test_postalCodes.txt";
+			var dst = @"testdata\test_postalCodes.out.txt";
 
-            FileUtil.EnsureFilesAreFunctionallyEqual(src, dst, 12, 0, new[] { '\t' }, Encoding.UTF8, false);
-        }
+			await GeoFileWriter.WritePostalcodesAsync(dst, await GeoFileReader.ReadPostalcodesAsync(src).ToListAsync());
 
-        [TestMethod]
-        public void CustomComposer_ComposesFileCorrectly()
-        {
-            var src = @"testdata\test_custom.txt";
-            var dst = @"testdata\test_custom.out.txt";
+			FileUtil.EnsureFilesAreFunctionallyEqual(src, dst, 12, 0, new[] { '\t' }, Encoding.UTF8, false);
+		}
 
-            new GeoFileWriter().WriteRecords(dst, new GeoFileReader().ReadRecords(src, new CustomParser(19, 5, new[] { '☃' }, Encoding.UTF7, true)), new CustomComposer(Encoding.UTF7, '☃'));
+		[TestMethod]
+		public async Task CustomComposer_ComposesFileCorrectlyAsync()
+		{
+			var src = @"testdata\test_custom.txt";
+			var dst = @"testdata\test_custom.out.txt";
 
-            FileUtil.EnsureFilesAreFunctionallyEqual(src, dst, 19, 5, new[] { '☃' }, Encoding.UTF7, true);
-        }
+			// Read records from the source file asynchronously
+			var records = await new GeoFileReader().ReadRecordsAsync(src, new CustomParser(19, 5, new[] { '☃' }, Encoding.UTF7, true)).ToListAsync();
 
-        [TestMethod]
-        public void Composer_HandlesGZippedFilesCorrectly()
-        {
-            var src = @"testdata\test_extendedgeonames.txt";
-            var dst = @"testdata\test_extendedgeonames.out.gz";
+			// Write the records to the destination file asynchronously
+			using (var stream = new FileStream(dst, FileMode.Create, FileAccess.Write))
+			{
+				await new GeoFileWriter().WriteRecordsAsync(stream, records, new CustomComposer(Encoding.UTF7, '☃'));
+			}
 
-            GeoFileWriter.WriteExtendedGeoNames(dst, GeoFileReader.ReadExtendedGeoNames(src));
+			// Ensure both files (src and dst) are functionally equal
+			FileUtil.EnsureFilesAreFunctionallyEqual(src, dst, 19, 5, new[] { '☃' }, Encoding.UTF7, true);
+		}
 
-            Assert.AreEqual(7, GeoFileReader.ReadExtendedGeoNames(dst).Count());
-        }
-    }
+		[TestMethod]
+		public async Task Composer_HandlesGZippedFilesCorrectly()
+		{
+			var src = @"testdata\test_extendedgeonames.txt";
+			var dst = @"testdata\test_extendedgeonames.out.gz";
+
+			await GeoFileWriter.WriteExtendedGeoNamesAsync(dst, await GeoFileReader.ReadExtendedGeoNamesAsync(src).ToListAsync());
+
+			Assert.AreEqual(7, (await GeoFileReader.ReadExtendedGeoNamesAsync(dst).ToListAsync()).Count());
+		}
+	}
 }

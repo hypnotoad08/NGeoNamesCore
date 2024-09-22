@@ -14,7 +14,9 @@ namespace NGeoNames
 		Plain = 1,
 
 		/// <summary>The file is a GZipped textfile.</summary>
-		GZip = 2
+		GZip = 2,
+
+		Zip = 3
 	}
 
 	/// <summary>
