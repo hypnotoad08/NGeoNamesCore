@@ -1,19 +1,20 @@
 
 # ![Logo](https://raw.githubusercontent.com/Hypnotoad08/NGeoNamesCore/master/icon.png) NGeoNamesCore
 
-This project is a fork of the original [NGeoNames](https://github.com/RobThree/NGeoNames) by RobThree, which has been modified to be compatible with .NET Core and .NET 6+.
+This project is a fork of the original [NGeoNames](https://github.com/RobThree/NGeoNames) by RobThree, which has been modified to be compatible with .NET Core and .NET 6+, and now fully supports **.Net 8**
 
 ### Changes in this fork:
-- Migrated from .NET Framework 4.5 to .NET Core / .NET 6.
+- Migrated from .NET Framework 4.5 to .NET Core / .NET 6+.
+- Now compatible with .Net 8
 - Renamed the project to **NGeoNamesCore** to reflect .NET Core compatibility.
 - Updated dependencies and APIs to support .NET Core and the latest .NET standards.
 - All methods have been updated to follow async patterns for better scalability.
 
 Inspired by [OfflineReverseGeocode](https://github.com/AReallyGoodName/OfflineReverseGeocode) found in [this Reddit post](http://www.reddit.com/r/programming/comments/281msj/). You may also be interested in [GeoSharp](https://github.com/Necrolis/GeoSharp). Uses [KdTree](https://github.com/codeandcats/KdTree).
 
-This library provides classes for downloading, reading, parsing, writing, and composing [files from GeoNames.org](http://download.geonames.org/export/dump/) and offers (reverse) geocoding methods such as `NearestNeighbourSearch()` and `RadialSearch()` on the downloaded dataset(s).
+This library provides classes for asynchronously downloading, reading, parsing, writing, and composing [files from GeoNames.org](http://download.geonames.org/export/dump/) and offers (reverse) geocoding methods such as `NearestNeighbourSearchAsync()` and `RadialSearchAsync()` on the downloaded dataset(s).
 
-The library is now available as a [NuGet package](https://www.nuget.org/packages/NGeoNamesCore/) with .NET Core and .NET 6 compatibility.
+The library is now available as a [NuGet package](https://www.nuget.org/packages/NGeoNamesCore/) with .NET Core and .NET 8 compatibility.
 
 
 ## Basic usage / example / "quick start"
@@ -198,7 +199,7 @@ The `GeoNamesReader` and `GeoNamesWriter`, as well as the (Extended)GeoName pars
 
 ## Help
 
-This fork comes with updated documentation for **NGeoNamesCore** to reflect changes for .NET Core and .NET 6 compatibility.
+This fork comes with updated documentation for **NGeoNamesCore** to reflect changes for .NET Core and .NET 8 compatibility.
 
 You can explore the code directly as it is richly commented. Updated help files and documentation may be included in future releases.
 
@@ -206,7 +207,7 @@ For more information on usage, refer to the examples in this `README.md` or the 
 
 ## Project status
 
-This is a fork of the original [NGeoNames](https://github.com/RobThree/NGeoNames) and has been renamed to **NGeoNamesCore** to reflect compatibility with .NET Core and .NET 6+.
+This is a fork of the original [NGeoNames](https://github.com/RobThree/NGeoNames) and has been renamed to **NGeoNamesCore** to reflect compatibility with .NET Core and .NET 8.
 The project will be updated as needed to ensure compatibility with newer versions of .NET, and I welcome contributions. If you're interested in contributing to this library, feel free to submit a pull request.
 
 If you encounter any issues, please [open an issue](https://github.com/Hypnotoad08/NGeoNamesCore/issues).
@@ -228,4 +229,4 @@ The original project is licensed under the same MIT license, and all credits to 
 
 The original NuGet package for **NGeoNames** can be found [here](https://www.nuget.org/packages/NGeoNames/).
 
-This forked version is now available as **NGeoNamesCore** on [NuGet.org](https://www.nuget.org/packages/NGeoNamesCore/), with the package reflecting updates to .NET Core, .NET 6, and fully async methods.
+This forked version is now available as **NGeoNamesCore** on [NuGet.org](https://www.nuget.org/packages/NGeoNamesCore/), with the package reflecting updates to .NET Core, .NET 8, and fully async methods.

@@ -10,7 +10,7 @@
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageProjectUrl>https://github.com/Hypnotoad08/NGeoNamesCore</PackageProjectUrl>
 		<PackageTags>reverse-geocoding geocoding geocode reverse-geocode geocoder reverse-geocoder maps</PackageTags>
-		<PackageReleaseNotes>This is a fork of NGeoNames, updated for .NET Core and .NET 6+ compatibility.</PackageReleaseNotes>
+		<PackageReleaseNotes>This is a fork of NGeoNames, updated for .NET Core and .NET 8 compatibility.</PackageReleaseNotes>
 		<Description>Provides classes and methods for downloading, reading/parsing, and utilizing files from GeoNames.org dumps. Forked from NGeoNames for .NET Core compatibility.</Description>
 		<PackageIconUrl>https://raw.githubusercontent.com/Hypnotoad08/NGeoNamesCore/main/icon.png</PackageIconUrl>
 		<Version>1.6.0</Version>

@@ -103,13 +103,13 @@ namespace NGeoNames
 			return new[] { destinationpath };
 		}
 
-		private async Task<bool> IsFileExpiredAsync(string path, TimeSpan ttl)
+		private static async Task<bool> IsFileExpiredAsync(string path, TimeSpan ttl)
 		{
 			var fileExists = File.Exists(path);
 			return !fileExists || (DateTime.UtcNow - (await Task.Run(() => new FileInfo(path).LastWriteTimeUtc))) > ttl;
 		}
 
-		private async Task<string[]> UnzipFilesAsync(string path, TimeSpan ttl)
+		private static async Task<string[]> UnzipFilesAsync(string path, TimeSpan ttl)
 		{
 			var files = new List<string>();
 
