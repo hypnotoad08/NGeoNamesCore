@@ -212,8 +212,7 @@ The project will be updated as needed to ensure compatibility with newer version
 
 If you encounter any issues, please [open an issue](https://github.com/Hypnotoad08/NGeoNamesCore/issues).
 
-<a href="https://www.nuget.org/packages/NGeoNamesCore/"><img src="https://img.shields.io/nuget/v/NGeoNamesCore
-" alt="NuGet version" height="18"></a>
+<a href="https://www.nuget.org/packages/NGeoNamesCore/"><img src="https://img.shields.io/nuget/v/NGeoNamesCore" alt="NuGet version" height="18"></a>
 
 
 ## License
