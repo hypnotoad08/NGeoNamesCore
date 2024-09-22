@@ -1,5 +1,5 @@
 
-# ![Logo](https://raw.githubusercontent.com/RobThree/NGeoNames/master/icon.png) NGeoNamesCore
+# ![Logo](https://raw.githubusercontent.com/Hypnotoad08/NGeoNamesCore/master/icon.png) NGeoNamesCore
 
 This project is a fork of the original [NGeoNames](https://github.com/RobThree/NGeoNames) by RobThree, which has been modified to be compatible with .NET Core and .NET 6+.
 
@@ -13,7 +13,7 @@ Inspired by [OfflineReverseGeocode](https://github.com/AReallyGoodName/OfflineRe
 
 This library provides classes for downloading, reading, parsing, writing, and composing [files from GeoNames.org](http://download.geonames.org/export/dump/) and offers (reverse) geocoding methods such as `NearestNeighbourSearch()` and `RadialSearch()` on the downloaded dataset(s).
 
-This library will be available as a [NuGet package](https://www.nuget.org/packages/NGeoNamesCore/) soon, reflecting the changes to .NET Core and .NET 6 compatibility.
+The library is now available as a [NuGet package](https://www.nuget.org/packages/NGeoNamesCore/) with .NET Core and .NET 6 compatibility.
 
 
 ## Basic usage / example / "quick start"
@@ -212,7 +212,8 @@ The project will be updated as needed to ensure compatibility with newer version
 If you encounter any issues, please [open an issue](https://github.com/Hypnotoad08/NGeoNamesCore/issues).
 
 [![Build status](https://ci.appveyor.com/api/projects/status/mkmbxvm1w0mxaifv)](https://ci.appveyor.com/project/RobIII/ngeonames) <!-- Replace with your own CI badge when available -->
-<a href="https://www.nuget.org/packages/NGeoNamesCore/"><img src="http://img.shields.io/nuget/v/NGeoNamesCore.svg?style=flat-square" alt="NuGet version" height="18"></a>
+<a href="https://www.nuget.org/packages/NGeoNamesCore/"><img src="https://img.shields.io/nuget/v/NGeoNamesCore
+" alt="NuGet version" height="18"></a>
 
 
 ## License
@@ -223,8 +224,8 @@ The original project is licensed under the same MIT license, and all credits to 
 
 [Logo / icon](http://www.iconninja.com/earth-search-internet-icon-44388) sourced from iconninja.com ([Archived page](http://riii.me/rftqo))
 
-## NuGet Package
+### NuGet Package
 
 The original NuGet package for **NGeoNames** can be found [here](https://www.nuget.org/packages/NGeoNames/).
 
-This forked version will soon be available as **NGeoNamesCore** on [NuGet.org](https://www.nuget.org/), with the package reflecting updates to .NET Core and .NET 6.
+This forked version is now available as **NGeoNamesCore** on [NuGet.org](https://www.nuget.org/packages/NGeoNamesCore/), with the package reflecting updates to .NET Core, .NET 6, and fully async methods.
