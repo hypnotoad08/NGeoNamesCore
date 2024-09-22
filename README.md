@@ -212,7 +212,6 @@ The project will be updated as needed to ensure compatibility with newer version
 
 If you encounter any issues, please [open an issue](https://github.com/Hypnotoad08/NGeoNamesCore/issues).
 
-[![Build status](https://ci.appveyor.com/api/projects/status/mkmbxvm1w0mxaifv)](https://ci.appveyor.com/project/RobIII/ngeonames) <!-- Replace with your own CI badge when available -->
 <a href="https://www.nuget.org/packages/NGeoNamesCore/"><img src="https://img.shields.io/nuget/v/NGeoNamesCore
 " alt="NuGet version" height="18"></a>
 
