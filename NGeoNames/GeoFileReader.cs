@@ -1,4 +1,6 @@
-﻿using NGeoNames.Entities;
+﻿#nullable enable
+
+using NGeoNames.Entities;
 using NGeoNames.Parsers;
 using System;
 using System.Collections.Generic;
@@ -213,7 +215,7 @@ namespace NGeoNames
 
 		private static async IAsyncEnumerable<T> ReadBuiltInResourceAsync<T>(string name, IParser<T> parser)
 		{
-			var data = Properties.Resources.ResourceManager.GetString(name);
+			var data = Properties.Resources.ResourceManager.GetString(name) ?? throw new ArgumentNullException(nameof(name), $"Resource with name {name} not found.");
 			await using var memoryStream = new MemoryStream(parser.Encoding.GetBytes(data));
 			await foreach (var record in new GeoFileReader().ReadRecordsAsync(memoryStream, parser))
 			{

@@ -34,18 +34,16 @@ namespace NGeoNames.Parsers
 			if (string.IsNullOrWhiteSpace(value))
 				throw new ArgumentNullException(nameof(value), "Value cannot be null or empty.");
 
-			if (int.TryParse(value, out var result))
-				return result;
+			// If the string ends with ".0", remove the ".0"
+			if (value.EndsWith(".0"))
+				value = value[..^2];
 
-			throw new FormatException($"The value '{value}' is not a valid integer.");
+			return int.Parse(value, NumberStyles.Integer, CultureInfo.InvariantCulture);
 		}
 
 		protected long StringToLong(string value)
 		{
-			if (long.TryParse(value, out var result))
-				return result;
-
-			throw new FormatException($"The value '{value}' is not a valid long integer.");
+			return long.Parse(value);
 		}
 
 		protected string[] StringToArray(string value, bool removeEmptyEntries = true)
@@ -61,26 +59,17 @@ namespace NGeoNames.Parsers
 
 		protected float StringToFloat(string value)
 		{
-			if (float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var result))
-				return result;
-
-			throw new FormatException($"The value '{value}' is not a valid float.");
+			return float.Parse(value, NumberStyles.Float, CultureInfo.InvariantCulture);
 		}
 
 		protected double StringToDouble(string value)
 		{
-			if (double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var result))
-				return result;
-
-			throw new FormatException($"The value '{value}' is not a valid double.");
+			return double.Parse(value, NumberStyles.Float, CultureInfo.InvariantCulture);
 		}
 
 		protected DateTime StringToDateTime(string value, string format = "yyyy-MM-dd")
 		{
-			if (DateTime.TryParseExact(value, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out var result))
-				return result;
-
-			throw new FormatException($"The value '{value}' is not a valid DateTime in the format '{format}'.");
+			return DateTime.ParseExact(value, format, CultureInfo.InvariantCulture, DateTimeStyles.None);
 		}
 
 		protected string StringToTimeZone(string value)

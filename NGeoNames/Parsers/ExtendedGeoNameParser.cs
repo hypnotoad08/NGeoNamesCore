@@ -41,7 +41,7 @@ namespace NGeoNames.Parsers
 				FeatureCode = fields[7],
 				CountryCode = fields[8],
 				AlternateCountryCodes = StringToArray(fields[9]),
-				Admincodes = new[] { fields[10], fields[11], fields[12], fields[13] },
+				Admincodes = [fields[10], fields[11], fields[12], fields[13]],
 				Population = StringToLong(fields[14]),
 				Elevation = fields[15].Length > 0 ? (int?)StringToInt(fields[15]) : null,
 				Dem = StringToInt(fields[16]),
