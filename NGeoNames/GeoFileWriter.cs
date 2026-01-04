@@ -3,6 +3,7 @@ using NGeoNames.Entities;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace NGeoNames
@@ -25,9 +26,10 @@ namespace NGeoNames
 		/// <param name="values">The values to write to the file.</param>
 		/// <param name="composer">The <see cref="IComposer{T}"/> to use when writing the file.</param>
 		/// <param name="lineseparator">The lineseparator to use (see <see cref="DEFAULTLINESEPARATOR"/>).</param>
-		public async Task WriteRecordsAsync<T>(string path, IEnumerable<T> values, IComposer<T> composer, string lineseparator = DEFAULTLINESEPARATOR)
+		/// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+		public async Task WriteRecordsAsync<T>(string path, IEnumerable<T> values, IComposer<T> composer, string lineseparator = DEFAULTLINESEPARATOR, CancellationToken cancellationToken = default)
 		{
-			await WriteRecordsAsync(path, values, composer, FileUtil.GetFileTypeFromExtension(path), lineseparator);
+			await WriteRecordsAsync(path, values, composer, FileUtil.GetFileTypeFromExtension(path), lineseparator, cancellationToken).ConfigureAwait(false);
 		}
 
 		/// <summary>
@@ -39,11 +41,12 @@ namespace NGeoNames
 		/// <param name="filetype">The <see cref="FileType"/> of the file.</param>
 		/// <param name="composer">The <see cref="IComposer{T}"/> to use when writing the file.</param>
 		/// <param name="lineseparator">The lineseparator to use (see <see cref="DEFAULTLINESEPARATOR"/>).</param>
-		public async Task WriteRecordsAsync<T>(string path, IEnumerable<T> values, IComposer<T> composer, FileType filetype, string lineseparator = DEFAULTLINESEPARATOR)
+		/// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+		public async Task WriteRecordsAsync<T>(string path, IEnumerable<T> values, IComposer<T> composer, FileType filetype, string lineseparator = DEFAULTLINESEPARATOR, CancellationToken cancellationToken = default)
 		{
-			using (var s = await GetStreamAsync(path, filetype))
+			using (var s = await GetStreamAsync(path, filetype, cancellationToken).ConfigureAwait(false))
 			{
-				await WriteRecordsAsync(s, values, composer, lineseparator);
+				await WriteRecordsAsync(s, values, composer, lineseparator, cancellationToken).ConfigureAwait(false);
 			}
 		}
 
@@ -55,19 +58,22 @@ namespace NGeoNames
 		/// <param name="values">The values to write to the file.</param>
 		/// <param name="composer">The <see cref="IComposer{T}"/> to use when writing the file.</param>
 		/// <param name="lineseparator">The lineseparator to use (see <see cref="DEFAULTLINESEPARATOR"/>).</param>
-		public async Task WriteRecordsAsync<T>(Stream stream, IEnumerable<T> values, IComposer<T> composer, string lineseparator = DEFAULTLINESEPARATOR)
+		/// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+		public async Task WriteRecordsAsync<T>(Stream stream, IEnumerable<T> values, IComposer<T> composer, string lineseparator = DEFAULTLINESEPARATOR, CancellationToken cancellationToken = default)
 		{
 			using (var w = new StreamWriter(stream, composer.Encoding))
 			{
 				foreach (var v in values)
 				{
-					await w.WriteAsync(composer.Compose(v) + lineseparator);
+					cancellationToken.ThrowIfCancellationRequested();
+					await w.WriteAsync(composer.Compose(v) + lineseparator).ConfigureAwait(false);
 				}
 			}
 		}
 
-		private static Task<Stream> GetStreamAsync(string path, FileType filetype)
+		private static Task<Stream> GetStreamAsync(string path, FileType filetype, CancellationToken cancellationToken = default)
 		{
+			cancellationToken.ThrowIfCancellationRequested();
 			var filestream = File.Open(path, FileMode.Create, FileAccess.Write, FileShare.Read);
 
 			var writeAsType = filetype == FileType.AutoDetect ? FileUtil.GetFileTypeFromExtension(path) : filetype;
@@ -81,154 +87,154 @@ namespace NGeoNames
 
 		#region Convenience methods
 
-		public static async Task WriteAdmin1CodesAsync(string filename, IEnumerable<Admin1Code> values)
+		public static async Task WriteAdmin1CodesAsync(string filename, IEnumerable<Admin1Code> values, CancellationToken cancellationToken = default)
 		{
-			await new GeoFileWriter().WriteRecordsAsync(filename, values, new Admin1CodeComposer());
+			await new GeoFileWriter().WriteRecordsAsync(filename, values, new Admin1CodeComposer(), DEFAULTLINESEPARATOR, cancellationToken).ConfigureAwait(false);
 		}
 
-		public static async Task WriteAdmin1CodesAsync(Stream stream, IEnumerable<Admin1Code> values)
+		public static async Task WriteAdmin1CodesAsync(Stream stream, IEnumerable<Admin1Code> values, CancellationToken cancellationToken = default)
 		{
-			await new GeoFileWriter().WriteRecordsAsync(stream, values, new Admin1CodeComposer());
+			await new GeoFileWriter().WriteRecordsAsync(stream, values, new Admin1CodeComposer(), DEFAULTLINESEPARATOR, cancellationToken).ConfigureAwait(false);
 		}
 
-		public static async Task WriteAdmin2CodesAsync(string filename, IEnumerable<Admin2Code> values)
+		public static async Task WriteAdmin2CodesAsync(string filename, IEnumerable<Admin2Code> values, CancellationToken cancellationToken = default)
 		{
-			await new GeoFileWriter().WriteRecordsAsync(filename, values, new Admin2CodeComposer());
+			await new GeoFileWriter().WriteRecordsAsync(filename, values, new Admin2CodeComposer(), DEFAULTLINESEPARATOR, cancellationToken).ConfigureAwait(false);
 		}
 
-		public static async Task WriteAdmin2CodesAsync(Stream stream, IEnumerable<Admin2Code> values)
+		public static async Task WriteAdmin2CodesAsync(Stream stream, IEnumerable<Admin2Code> values, CancellationToken cancellationToken = default)
 		{
-			await new GeoFileWriter().WriteRecordsAsync(stream, values, new Admin2CodeComposer());
+			await new GeoFileWriter().WriteRecordsAsync(stream, values, new Admin2CodeComposer(), DEFAULTLINESEPARATOR, cancellationToken).ConfigureAwait(false);
 		}
 
-		public static async Task WriteAlternateNamesAsync(string filename, IEnumerable<AlternateName> values)
+		public static async Task WriteAlternateNamesAsync(string filename, IEnumerable<AlternateName> values, CancellationToken cancellationToken = default)
 		{
-			await new GeoFileWriter().WriteRecordsAsync(filename, values, new AlternateNameComposer());
+			await new GeoFileWriter().WriteRecordsAsync(filename, values, new AlternateNameComposer(), DEFAULTLINESEPARATOR, cancellationToken).ConfigureAwait(false);
 		}
 
-		public static async Task WriteAlternateNamesAsync(Stream stream, IEnumerable<AlternateName> values)
+		public static async Task WriteAlternateNamesAsync(Stream stream, IEnumerable<AlternateName> values, CancellationToken cancellationToken = default)
 		{
-			await new GeoFileWriter().WriteRecordsAsync(stream, values, new AlternateNameComposer());
+			await new GeoFileWriter().WriteRecordsAsync(stream, values, new AlternateNameComposer(), DEFAULTLINESEPARATOR, cancellationToken).ConfigureAwait(false);
 		}
 
-		public static async Task WriteAlternateNamesV2Async(string filename, IEnumerable<AlternateNameV2> values)
+		public static async Task WriteAlternateNamesV2Async(string filename, IEnumerable<AlternateNameV2> values, CancellationToken cancellationToken = default)
 		{
-			await new GeoFileWriter().WriteRecordsAsync(filename, values, new AlternateNameV2Composer());
+			await new GeoFileWriter().WriteRecordsAsync(filename, values, new AlternateNameV2Composer(), DEFAULTLINESEPARATOR, cancellationToken).ConfigureAwait(false);
 		}
 
-		public static async Task WriteAlternateNamesV2Async(Stream stream, IEnumerable<AlternateNameV2> values)
+		public static async Task WriteAlternateNamesV2Async(Stream stream, IEnumerable<AlternateNameV2> values, CancellationToken cancellationToken = default)
 		{
-			await new GeoFileWriter().WriteRecordsAsync(stream, values, new AlternateNameV2Composer());
+			await new GeoFileWriter().WriteRecordsAsync(stream, values, new AlternateNameV2Composer(), DEFAULTLINESEPARATOR, cancellationToken).ConfigureAwait(false);
 		}
 
-		public static async Task WriteContinentsAsync(string filename, IEnumerable<Continent> values)
+		public static async Task WriteContinentsAsync(string filename, IEnumerable<Continent> values, CancellationToken cancellationToken = default)
 		{
-			await new GeoFileWriter().WriteRecordsAsync(filename, values, new ContinentComposer());
+			await new GeoFileWriter().WriteRecordsAsync(filename, values, new ContinentComposer(), DEFAULTLINESEPARATOR, cancellationToken).ConfigureAwait(false);
 		}
 
-		public static async Task WriteContinentsAsync(Stream stream, IEnumerable<Continent> values)
+		public static async Task WriteContinentsAsync(Stream stream, IEnumerable<Continent> values, CancellationToken cancellationToken = default)
 		{
-			await new GeoFileWriter().WriteRecordsAsync(stream, values, new ContinentComposer());
+			await new GeoFileWriter().WriteRecordsAsync(stream, values, new ContinentComposer(), DEFAULTLINESEPARATOR, cancellationToken).ConfigureAwait(false);
 		}
 
-		public static async Task WriteCountryInfoAsync(string filename, IEnumerable<CountryInfo> values)
+		public static async Task WriteCountryInfoAsync(string filename, IEnumerable<CountryInfo> values, CancellationToken cancellationToken = default)
 		{
-			await new GeoFileWriter().WriteRecordsAsync(filename, values, new CountryInfoComposer());
+			await new GeoFileWriter().WriteRecordsAsync(filename, values, new CountryInfoComposer(), DEFAULTLINESEPARATOR, cancellationToken).ConfigureAwait(false);
 		}
 
-		public static async Task WriteCountryInfoAsync(Stream stream, IEnumerable<CountryInfo> values)
+		public static async Task WriteCountryInfoAsync(Stream stream, IEnumerable<CountryInfo> values, CancellationToken cancellationToken = default)
 		{
-			await new GeoFileWriter().WriteRecordsAsync(stream, values, new CountryInfoComposer());
+			await new GeoFileWriter().WriteRecordsAsync(stream, values, new CountryInfoComposer(), DEFAULTLINESEPARATOR, cancellationToken).ConfigureAwait(false);
 		}
 
-		public static async Task WriteExtendedGeoNamesAsync(string filename, IEnumerable<ExtendedGeoName> values)
+		public static async Task WriteExtendedGeoNamesAsync(string filename, IEnumerable<ExtendedGeoName> values, CancellationToken cancellationToken = default)
 		{
-			await new GeoFileWriter().WriteRecordsAsync(filename, values, new ExtendedGeoNameComposer());
+			await new GeoFileWriter().WriteRecordsAsync(filename, values, new ExtendedGeoNameComposer(), DEFAULTLINESEPARATOR, cancellationToken).ConfigureAwait(false);
 		}
 
-		public static async Task WriteExtendedGeoNamesAsync(Stream stream, IEnumerable<ExtendedGeoName> values)
+		public static async Task WriteExtendedGeoNamesAsync(Stream stream, IEnumerable<ExtendedGeoName> values, CancellationToken cancellationToken = default)
 		{
-			await new GeoFileWriter().WriteRecordsAsync(stream, values, new ExtendedGeoNameComposer());
+			await new GeoFileWriter().WriteRecordsAsync(stream, values, new ExtendedGeoNameComposer(), DEFAULTLINESEPARATOR, cancellationToken).ConfigureAwait(false);
 		}
 
-		public static async Task WriteFeatureClassesAsync(string filename, IEnumerable<FeatureClass> values)
+		public static async Task WriteFeatureClassesAsync(string filename, IEnumerable<FeatureClass> values, CancellationToken cancellationToken = default)
 		{
-			await new GeoFileWriter().WriteRecordsAsync(filename, values, new FeatureClassComposer());
+			await new GeoFileWriter().WriteRecordsAsync(filename, values, new FeatureClassComposer(), DEFAULTLINESEPARATOR, cancellationToken).ConfigureAwait(false);
 		}
 
-		public static async Task WriteFeatureClassesAsync(Stream stream, IEnumerable<FeatureClass> values)
+		public static async Task WriteFeatureClassesAsync(Stream stream, IEnumerable<FeatureClass> values, CancellationToken cancellationToken = default)
 		{
-			await new GeoFileWriter().WriteRecordsAsync(stream, values, new FeatureClassComposer());
+			await new GeoFileWriter().WriteRecordsAsync(stream, values, new FeatureClassComposer(), DEFAULTLINESEPARATOR, cancellationToken).ConfigureAwait(false);
 		}
 
-		public static async Task WriteFeatureCodesAsync(string filename, IEnumerable<FeatureCode> values)
+		public static async Task WriteFeatureCodesAsync(string filename, IEnumerable<FeatureCode> values, CancellationToken cancellationToken = default)
 		{
-			await new GeoFileWriter().WriteRecordsAsync(filename, values, new FeatureCodeComposer());
+			await new GeoFileWriter().WriteRecordsAsync(filename, values, new FeatureCodeComposer(), DEFAULTLINESEPARATOR, cancellationToken).ConfigureAwait(false);
 		}
 
-		public static async Task WriteFeatureCodesAsync(Stream stream, IEnumerable<FeatureCode> values)
+		public static async Task WriteFeatureCodesAsync(Stream stream, IEnumerable<FeatureCode> values, CancellationToken cancellationToken = default)
 		{
-			await new GeoFileWriter().WriteRecordsAsync(stream, values, new FeatureCodeComposer());
+			await new GeoFileWriter().WriteRecordsAsync(stream, values, new FeatureCodeComposer(), DEFAULTLINESEPARATOR, cancellationToken).ConfigureAwait(false);
 		}
 
-		public static async Task WriteGeoNamesAsync(string filename, IEnumerable<GeoName> values, bool useExtendedFileFormat = false)
+		public static async Task WriteGeoNamesAsync(string filename, IEnumerable<GeoName> values, bool useExtendedFileFormat = false, CancellationToken cancellationToken = default)
 		{
-			await new GeoFileWriter().WriteRecordsAsync(filename, values, new GeoNameComposer(useExtendedFileFormat));
+			await new GeoFileWriter().WriteRecordsAsync(filename, values, new GeoNameComposer(useExtendedFileFormat), DEFAULTLINESEPARATOR, cancellationToken).ConfigureAwait(false);
 		}
 
-		public static async Task WriteGeoNamesAsync(Stream stream, IEnumerable<GeoName> values, bool useExtendedFileFormat = false)
+		public static async Task WriteGeoNamesAsync(Stream stream, IEnumerable<GeoName> values, bool useExtendedFileFormat = false, CancellationToken cancellationToken = default)
 		{
-			await new GeoFileWriter().WriteRecordsAsync(stream, values, new GeoNameComposer(useExtendedFileFormat));
+			await new GeoFileWriter().WriteRecordsAsync(stream, values, new GeoNameComposer(useExtendedFileFormat), DEFAULTLINESEPARATOR, cancellationToken).ConfigureAwait(false);
 		}
 
-		public static async Task WriteHierarchyAsync(string filename, IEnumerable<HierarchyNode> values)
+		public static async Task WriteHierarchyAsync(string filename, IEnumerable<HierarchyNode> values, CancellationToken cancellationToken = default)
 		{
-			await new GeoFileWriter().WriteRecordsAsync(filename, values, new HierarchyComposer());
+			await new GeoFileWriter().WriteRecordsAsync(filename, values, new HierarchyComposer(), DEFAULTLINESEPARATOR, cancellationToken).ConfigureAwait(false);
 		}
 
-		public static async Task WriteHierarchyAsync(Stream stream, IEnumerable<HierarchyNode> values)
+		public static async Task WriteHierarchyAsync(Stream stream, IEnumerable<HierarchyNode> values, CancellationToken cancellationToken = default)
 		{
-			await new GeoFileWriter().WriteRecordsAsync(stream, values, new HierarchyComposer());
+			await new GeoFileWriter().WriteRecordsAsync(stream, values, new HierarchyComposer(), DEFAULTLINESEPARATOR, cancellationToken).ConfigureAwait(false);
 		}
 
-		public static async Task WriteISOLanguageCodesAsync(string filename, IEnumerable<ISOLanguageCode> values)
+		public static async Task WriteISOLanguageCodesAsync(string filename, IEnumerable<ISOLanguageCode> values, CancellationToken cancellationToken = default)
 		{
-			await new GeoFileWriter().WriteRecordsAsync(filename, values, new ISOLanguageCodeComposer());
+			await new GeoFileWriter().WriteRecordsAsync(filename, values, new ISOLanguageCodeComposer(), DEFAULTLINESEPARATOR, cancellationToken).ConfigureAwait(false);
 		}
 
-		public static async Task WriteISOLanguageCodesAsync(Stream stream, IEnumerable<ISOLanguageCode> values)
+		public static async Task WriteISOLanguageCodesAsync(Stream stream, IEnumerable<ISOLanguageCode> values, CancellationToken cancellationToken = default)
 		{
-			await new GeoFileWriter().WriteRecordsAsync(stream, values, new ISOLanguageCodeComposer());
+			await new GeoFileWriter().WriteRecordsAsync(stream, values, new ISOLanguageCodeComposer(), DEFAULTLINESEPARATOR, cancellationToken).ConfigureAwait(false);
 		}
 
-		public static async Task WriteTimeZonesAsync(string filename, IEnumerable<TimeZone> values)
+		public static async Task WriteTimeZonesAsync(string filename, IEnumerable<TimeZone> values, CancellationToken cancellationToken = default)
 		{
-			await new GeoFileWriter().WriteRecordsAsync(filename, values, new TimeZoneComposer());
+			await new GeoFileWriter().WriteRecordsAsync(filename, values, new TimeZoneComposer(), DEFAULTLINESEPARATOR, cancellationToken).ConfigureAwait(false);
 		}
 
-		public static async Task WriteTimeZonesAsync(Stream stream, IEnumerable<TimeZone> values)
+		public static async Task WriteTimeZonesAsync(Stream stream, IEnumerable<TimeZone> values, CancellationToken cancellationToken = default)
 		{
-			await new GeoFileWriter().WriteRecordsAsync(stream, values, new TimeZoneComposer());
+			await new GeoFileWriter().WriteRecordsAsync(stream, values, new TimeZoneComposer(), DEFAULTLINESEPARATOR, cancellationToken).ConfigureAwait(false);
 		}
 
-		public static async Task WriteUserTagsAsync(string filename, IEnumerable<UserTag> values)
+		public static async Task WriteUserTagsAsync(string filename, IEnumerable<UserTag> values, CancellationToken cancellationToken = default)
 		{
-			await new GeoFileWriter().WriteRecordsAsync(filename, values, new UserTagComposer());
+			await new GeoFileWriter().WriteRecordsAsync(filename, values, new UserTagComposer(), DEFAULTLINESEPARATOR, cancellationToken).ConfigureAwait(false);
 		}
 
-		public static async Task WriteUserTagsAsync(Stream stream, IEnumerable<UserTag> values)
+		public static async Task WriteUserTagsAsync(Stream stream, IEnumerable<UserTag> values, CancellationToken cancellationToken = default)
 		{
-			await new GeoFileWriter().WriteRecordsAsync(stream, values, new UserTagComposer());
+			await new GeoFileWriter().WriteRecordsAsync(stream, values, new UserTagComposer(), DEFAULTLINESEPARATOR, cancellationToken).ConfigureAwait(false);
 		}
 
-		public static async Task WritePostalcodesAsync(string filename, IEnumerable<Postalcode> values)
+		public static async Task WritePostalcodesAsync(string filename, IEnumerable<Postalcode> values, CancellationToken cancellationToken = default)
 		{
-			await new GeoFileWriter().WriteRecordsAsync(filename, values, new PostalcodeComposer());
+			await new GeoFileWriter().WriteRecordsAsync(filename, values, new PostalcodeComposer(), DEFAULTLINESEPARATOR, cancellationToken).ConfigureAwait(false);
 		}
 
-		public static async Task WritePostalcodesAsync(Stream stream, IEnumerable<Postalcode> values)
+		public static async Task WritePostalcodesAsync(Stream stream, IEnumerable<Postalcode> values, CancellationToken cancellationToken = default)
 		{
-			await new GeoFileWriter().WriteRecordsAsync(stream, values, new PostalcodeComposer());
+			await new GeoFileWriter().WriteRecordsAsync(stream, values, new PostalcodeComposer(), DEFAULTLINESEPARATOR, cancellationToken).ConfigureAwait(false);
 		}
 
 		#endregion Convenience methods

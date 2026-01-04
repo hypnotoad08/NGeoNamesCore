@@ -1,18 +1,20 @@
-
 # ![Logo](https://raw.githubusercontent.com/Hypnotoad08/NGeoNamesCore/master/icon.png) NGeoNamesCore
 
-This project is a fork of the original [NGeoNames](https://github.com/RobThree/NGeoNames) by RobThree, which has been modified to be compatible with .NET Core and .NET 6+, and now fully supports **.Net 8**
+This project is a fork of the original [NGeoNames](https://github.com/RobThree/NGeoNames) by RobThree, which has been modified to be compatible with .NET Core and .NET 6+, and now fully supports **.NET 8**
 
 ### Changes in this fork:
-- Migrated from .NET Framework 4.5 to .NET Core / .NET 6+.
-- Now compatible with .Net 8
-- Renamed the project to **NGeoNamesCore** to reflect .NET Core compatibility.
-- Updated dependencies and APIs to support .NET Core and the latest .NET standards.
-- All methods have been updated to follow async patterns for better scalability.
+- Migrated from .NET Framework 4.5 to .NET Core / .NET 6+
+- Now compatible with .NET 8
+- Renamed the project to **NGeoNamesCore** to reflect .NET Core compatibility
+- Updated dependencies and APIs to support .NET Core and the latest .NET standards
+- All methods have been updated to follow async patterns for better scalability
+- Added CancellationToken support to all async methods
+- Performance improvements with Memory/Span<T> optimizations
+- IHttpClientFactory support for ASP.NET Core applications
 
 Inspired by [OfflineReverseGeocode](https://github.com/AReallyGoodName/OfflineReverseGeocode) found in [this Reddit post](http://www.reddit.com/r/programming/comments/281msj/). You may also be interested in [GeoSharp](https://github.com/Necrolis/GeoSharp). Uses [KdTree](https://github.com/codeandcats/KdTree).
 
-This library provides classes for asynchronously downloading, reading, parsing, writing, and composing [files from GeoNames.org](http://download.geonames.org/export/dump/) and offers (reverse) geocoding methods such as `NearestNeighbourSearchAsync()` and `RadialSearchAsync()` on the downloaded dataset(s).
+This library provides classes for asynchronously downloading, reading, parsing, writing, and composing [files from GeoNames.org](http://download.geonames.org/export/dump/) and offers (reverse) geocoding methods such as `NearestNeighbourSearch()` and `RadialSearch()` on the downloaded dataset(s).
 
 The library is now available as a [NuGet package](https://www.nuget.org/packages/NGeoNamesCore/) with .NET Core and .NET 8 compatibility.
 
@@ -38,8 +40,8 @@ var amsterdam = nldata.Where(n =>
 
 // Initialize a reversegeocoder with our geo-items from The Netherlands
 var reversegeocoder = new ReverseGeoCode<ExtendedGeoName>(nldata);
-// Locate 250 geo-items near the center of Amsterdam using async method
-var results = await reversegeocoder.RadialSearchAsync(amsterdam, 250);  
+// Locate 250 geo-items near the center of Amsterdam
+var results = reversegeocoder.RadialSearch(amsterdam, 250);  
 // Print the results
 foreach (var r in results) {
     Console.WriteLine(
@@ -68,7 +70,7 @@ Also worth noting is that the readers return an `IAsyncEnumerable<SomeEntity>`; 
 
 ### <a name="downloading"></a>Downloading / retrieving data from geonames.org (Optional)
 
-To download files from geonames.org, you can use the `GeoFileDownloader` class, which is, in essence, a wrapper for a basic [`WebClient`](http://msdn.microsoft.com/en-us/library/system.net.webclient.aspx). The simplest form is:
+To download files from geonames.org, you can use the `GeoFileDownloader` class. The simplest form is:
 
 ```c#
 // Downloads (and extracts) geoname data in NL.zip from geonames.org
@@ -80,13 +82,13 @@ await GeoFileDownloader.CreatePostalcodeDownloader()
     .DownloadFileAsync("NL.zip", @"D:\my\geodata\postalcode");
 ```
 
-You can specify the BaseUri in the `GeoFileDownloader` constructor or pass an absolute URL to the `DownloadFileAsync()` method if you want to use another location than the default `http://download.geonames.org/export/dump/`. The static 'factory methods'  `CreateGeoFileDownloader()` and `CreatePostalcodeDownloader()` are the easiest way to create a `GeoFileDownloader`; these use the built-in values for the BaseUri. The `GeoFileDownloader` has properties to set a (HTTP) `CachePolicy`, `Proxy`, and `Credentials` to use when downloading the file. The filedownloader, by default, downloads a file only if the destination file doesn't exist *or* when the destination file has "expired" (by default 24 hours). It uses the file's CreationDate to determine when the file was downloaded and if a newer version should be downloaded. The "TTL", how long a file will be 'valid', can be set using the `DefaultTTL` property of the `GeoFileDownloader` class. You can also use the `DownloadFileWhenOlderThan()` method which allows you to explicitly set a TTL. When a filename is specified (e.g. `d:\folder\foo.txt`) the file will be named accordingly.
+You can specify the BaseUri in the `GeoFileDownloader` constructor or pass an absolute URL to the `DownloadFileAsync()` method if you want to use another location than the default `http://download.geonames.org/export/dump/`. The static 'factory methods'  `CreateGeoFileDownloader()` and `CreatePostalcodeDownloader()` are the easiest way to create a `GeoFileDownloader`; these use the built-in values for the BaseUri. The `GeoFileDownloader` has properties to set a (HTTP) `CachePolicy`, `Proxy`, and `Credentials` to use when downloading the file. The filedownloader, by default, downloads a file only if the destination file doesn't exist *or* when the destination file has "expired" (by default 24 hours). It uses the file's CreationDate to determine when the file was downloaded and if a newer version should be downloaded. The "TTL", how long a file will be 'valid', can be set using the `DefaultTTL` property of the `GeoFileDownloader` class. You can also use the `DownloadFileWhenOlderThanAsync()` method which allows you to explicitly set a TTL. When a filename is specified (e.g. `d:\folder\foo.txt`) the file will be named accordingly.
 
 ZIP files are automatically extracted in the destination folder; the original zip file is preserved because the `GeoFileDownloader` needs to know which files are supposed to be in the zip file and thus in the destination directory in their extracted form.
 
 ### <a name="parsing"></a>Reading / parsing geonames.org data
 
-Once files are downloaded using the `GeoFileDownloader`, *or* by using your own custom/specific implementation, the files can be accessed using the `GeoFileReader` class. This class contains a number of static "convenience methods" like `ReadGeoNamesAsync()` and its "sibling" `ReadExtendedGeoNamesAsync()`. but also `ReadCountryInfoAsync()`, `ReadAlternateNamesAsync()`, etc. There is a "convenience method" for each entity.
+Once files are downloaded using the `GeoFileDownloader`, *or* by using your own custom/specific implementation, the files can be accessed using the `GeoFileReader` class. This class contains a number of static "convenience methods" like `ReadGeoNamesAsync()` and its "sibling" `ReadExtendedGeoNamesAsync()`, but also `ReadCountryInfoAsync()`, `ReadAlternateNamesAsync()`, etc. There is a "convenience method" for each entity.
 
 ```c#
 // Open file "cities1000.txt" and retrieve only cities in the US
@@ -95,7 +97,7 @@ var cities_in_us = await GeoFileReader.ReadExtendedGeoNamesAsync(@"D:\my\geodata
         .OrderBy(p => p.Name).ToListAsync();
 ```
 
-Again, **please note** that `Read<Something>Async` methods return an `IAsyncEnumerable<T>`. Whenever you want to access the data more than once, you will probably want to call `.ToArrayAsync()` or similar to materialize the data into memory. The `GeoFileReader` class has two static methods (`ReadBuiltInContinentsAsync()` and `ReadBuiltInFeatureClassesAsync()`) that can be used to use built-in values for continents and [feature codes](http://www.geonames.org/export/codes.html), which are not provided by g...
+Again, **please note** that `Read<Something>Async` methods return an `IAsyncEnumerable<T>`. Whenever you want to access the data more than once, you will probably want to call `.ToArrayAsync()` or similar to materialize the data into memory. The `GeoFileReader` class has two static methods (`ReadBuiltInContinentsAsync()` and `ReadBuiltInFeatureClassesAsync()`) that can be used to use built-in values for continents and [feature codes](http://www.geonames.org/export/codes.html).
 
 You can also add your own entities and, as long as you provide a parser for it, use the `GeoFileReader` class to read/parse files for these entities as well:
 
@@ -113,51 +115,51 @@ As you'll probably realize by now, the `GeoFileReader` class *combined* with [LI
 
 ### <a name="utilizing"></a>Utilizing geonames.org data
 
-The 'heart' of the library is the `ReverseGeoCode<T>` class. When you supply it with either `IEnumerable<GeoNames>` or `IEnumerable<ExtendedGeoNames>`, it can be used to do a `RadialSearchAsync()` or `NearestNeighbourSearchAsync()`. Supplying the class with data can be done by either passing it to the class constructor or by using the `AddAsync()` or `AddRangeAsync()` methods. You may want to call the `BalanceAsync()` method to balance the internal KD-tree. This is done automatically when the data is supplied via the constructor.
+The 'heart' of the library is the `ReverseGeoCode<T>` class. When you supply it with either `IEnumerable<GeoNames>` or `IEnumerable<ExtendedGeoNames>`, it can be used to do a `RadialSearch()` or `NearestNeighbourSearch()`. Supplying the class with data can be done by either passing it to the class constructor or by using the `Add()` or `AddRange()` methods. The internal KD-tree is automatically balanced when the data is supplied via the constructor.
 
 ```c#
 // Create our ReverseGeoCode class and supply it with data
 var r = new ReverseGeoCode<ExtendedGeoName>(
-        await GeoFileReader.ReadExtendedGeoNamesAsync(@"D:oo\cities1000.txt").ToListAsync()
+        await GeoFileReader.ReadExtendedGeoNamesAsync(@"D:\foo\cities1000.txt").ToListAsync()
     );
 
 // Create a point from a lat/long pair from which we want to conduct our search(es) (center)
 var new_york = r.CreateFromLatLong(40.7056308, -73.9780035);
 
 // Find 10 nearest
-await r.NearestNeighbourSearchAsync(new_york, 10);
+var results = r.NearestNeighbourSearch(new_york, 10);
 ```
 
-Ofcourse there's no need to dabble with lat/long at all:
+Of course there's no need to dabble with lat/long at all:
 
 ```c#
 // Read data into memory
-var data = (await GeoFileReader.ReadExtendedGeoNamesAsync(@"D:oo\cities1000.txt"))
-        .ToDictionary(p => p.Id);
+var data = await GeoFileReader.ReadExtendedGeoNamesAsync(@"D:\foo\cities1000.txt")
+    .ToDictionaryAsync(p => p.Id);
 
-// Find New York by it's geoname ID (O(1) lookup)
+// Find New York by its geoname ID (O(1) lookup)
 var new_york = data[5128581];
 
 // Find 10 nearest
 var r = new ReverseGeoCode<ExtendedGeoName>(data.Values);
-await r.NearestNeighbourSearchAsync(new_york, 10);
+var results = r.NearestNeighbourSearch(new_york, 10);
 ```
 
 Or simply find by name:
 
-
 ```c#
 // Read data into memory
-var data = (await GeoFileReader.ReadExtendedGeoNamesAsync(@"D:oo\cities1000.txt"))
-        .ToArray();
+var data = await GeoFileReader.ReadExtendedGeoNamesAsync(@"D:\foo\cities1000.txt")
+    .ToArrayAsync();
 
-// Find New York by it's name (linear search, O(n))
+// Find New York by its name (linear search, O(n))
 var new_york = data.Where(p => p.Name.Equals("New York City")).First();
 
 // Find 10 nearest
 var r = new ReverseGeoCode<ExtendedGeoName>(data);
-await r.NearestNeighbourSearchAsync(new_york, 10);
+var results = r.NearestNeighbourSearch(new_york, 10);
 ```
+
 Depending on how you want to search/use the underlying data, you may want to use other, more optimal, data structures than demonstrated above. It's up to you!
 
 Note that the library is based on the [**International System of Units (SI)**](http://en.wikipedia.org/wiki/International_System_of_Units); units of distance are specified in **meters**. If you want to use the imperial system (e.g. miles, nautical miles, yards) you need to convert to/from meters. The `GeoUtil` class provides helper-methods for converting miles/yards to meters and vice versa.
@@ -165,9 +167,10 @@ Note that the library is based on the [**International System of Units (SI)**](h
 The `GeoName` class (and, by extension, the `ExtendedGeoName` class) has a `DistanceTo()` method which can be used to determine the exact distance between two points.
 
 Both the `NearestNeighbourSearch()` and `RadialSearch()` methods have some overloads that accept lat/long pairs as *doubles* as well.
+
 ### <a name="composing"></a>Writing / composing geonames.org data
 
-The `NGeoNames.Composers` namespace holds composers (the opposite of parsers) to enable you to write geoname.org data files. For this, you can use the `GeoNameFileWriter` class which, like the `GeoNameFileReader` class, has generic methods for writing records (`WriteRecordsAsync<T>`) and static "convenience methods" to write specific entities to a file.
+The `NGeoNames.Composers` namespace holds composers (the opposite of parsers) to enable you to write geoname.org data files. For this, you can use the `GeoFileWriter` class which, like the `GeoFileReader` class, has generic methods for writing records (`WriteRecordsAsync<T>`) and static "convenience methods" to write specific entities to a file.
 
 Below is an example of what this would look like (with an extra filter added to filter out records with `population < 1000`):
 
@@ -179,7 +182,6 @@ await GeoFileWriter.WriteExtendedGeoNamesAsync(@"d:\foo\benelux1000.txt",
       .OrderBy(e => e.CountryCode).ThenBy(e => e.Name)
 );
 
-
 // ...or...
 
 // Join BE, NL en LU datasets, filter records with a population of >= 1000
@@ -190,12 +192,11 @@ await GeoFileWriter.WriteExtendedGeoNamesAsync(@"d:\foo\benelux1000.txt",
         .Where(e => e.Population >= 1000)
         .OrderBy(e => e.CountryCode).ThenBy(e => e.Name)
 );
-
-
 ```
+
 ### A word about "extended format"
 
-The `GeoNamesReader` and `GeoNamesWriter`, as well as the (Extended)GeoName parsers/composers, always assume the `ExtendedGeoName` format unless explicitly specified. The parameter **extendedfileformat** may pop up on some method overloads. Whenever this parameter is passed `false`, the class will assume a 'simple' (or non-extended) format with only 4 fields of data: Id, Name, Latitude, and Longitude. This format is more compact.
+The `GeoFileReader` and `GeoFileWriter`, as well as the (Extended)GeoName parsers/composers, always assume the `ExtendedGeoName` format unless explicitly specified. The parameter **useExtendedFileFormat** may pop up on some method overloads. Whenever this parameter is passed `false`, the class will assume a 'simple' (or non-extended) format with only 4 fields of data: Id, Name, Latitude, and Longitude. This format is more compact.
 
 ## Help
 
@@ -213,7 +214,6 @@ The project will be updated as needed to ensure compatibility with newer version
 If you encounter any issues, please [open an issue](https://github.com/Hypnotoad08/NGeoNamesCore/issues).
 
 <a href="https://www.nuget.org/packages/NGeoNamesCore/"><img src="https://img.shields.io/nuget/v/NGeoNamesCore" alt="NuGet version" height="18"></a>
-
 
 ## License
 

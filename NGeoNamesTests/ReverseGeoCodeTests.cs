@@ -86,8 +86,8 @@ namespace NGeoNamesTests
 
 			var expected_ids = new[] { 2640729, 2639577, 2642465, 2637627, 2633709, 2643339, 2634677, 2636503, 2652053, 2654710, 2643743, 2646003, 2643741, 2653941, 6690870, 2655775, 2651621, 2650497, 2656194, 2653266, 2648657, 2637433, 2652618, 2646057 };
 
-			// Search from the center in London for all points in a 10Km radius
-			var searchresults = (await rg.RadialSearchAsync(center, 100000.0)).ToArray();
+			// Search from the center in London for all points in a 10Km radius (using synchronous method)
+			var searchresults = await Task.Run(() => rg.RadialSearch(center, 100000.0).ToArray());
 			// Number of results should match length of expected_id array
 			Assert.AreEqual(expected_ids.Length, searchresults.Length);
 			// Check if each result is in the expected results array
@@ -109,8 +109,8 @@ namespace NGeoNamesTests
 			var expected_ids = new[] { 2643741, 2646003, 2643743, 6690870, 2651621, 2655775, 2636503, 2634677, 2656194, 2653266 };
 			Assert.AreEqual(maxresults, expected_ids.Length);
 
-			// Search from the center in London for all points in a 10Km radius, allowing only maxresults results
-			var searchresults = (await rg.RadialSearchAsync(center, 100000.0, maxresults)).ToArray();
+			// Search from the center in London for all points in a 10Km radius, allowing only maxresults results (using synchronous method)
+			var searchresults = await Task.Run(() => rg.RadialSearch(center, 100000.0, maxresults).ToArray());
 			// Number of results should match length of expected_id array
 			Assert.AreEqual(expected_ids.Length, searchresults.Length);
 			// Check if each result is in the expected results array
@@ -130,8 +130,8 @@ namespace NGeoNamesTests
 
 			var expected_ids = new[] { 2640729, 2639577, 2642465, 2637627, 2633709, 2643339, 2634677, 2636503, 2652053, 2654710, 2643743, 2646003, 2643741, 2653941, 6690870, 2655775, 2651621, 2650497, 2656194, 2653266, 2648657, 2637433, 2652618, 2646057 };
 
-			// Search from the center in London for the first X points (where X == expected_ids.length)
-			var searchresults = (await rg.NearestNeighbourSearchAsync(center, expected_ids.Length)).ToArray();
+			// Search from the center in London for the first X points (where X == expected_ids.length) (using synchronous method)
+			var searchresults = await Task.Run(() => rg.NearestNeighbourSearch(center, expected_ids.Length).ToArray());
 			// Number of results should match length of expected_id array
 			Assert.AreEqual(expected_ids.Length, searchresults.Length);
 			// Check if each result is in the expected results array

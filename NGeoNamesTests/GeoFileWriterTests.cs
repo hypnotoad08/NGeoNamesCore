@@ -42,11 +42,18 @@ namespace NGeoNamesTests
 		}
 
 		[TestMethod]
-		[ExpectedException(typeof(NotSupportedException))]
 		public async Task GeoFileWriter_ThrowsOnFailureWhenAutodetectingFileType()
 		{
 			//When filetype == autodetect and an unknown extension is used an exception should be thrown
-			await new GeoFileWriter().WriteRecordsAsync(@"testdata\invalid.out.ext", testvalues, new CustomComposer(Encoding.UTF8, '\t'));
+			try
+			{
+				await new GeoFileWriter().WriteRecordsAsync(@"testdata\invalid.out.ext", testvalues, new CustomComposer(Encoding.UTF8, '\t'));
+				Assert.Fail("Expected NotSupportedException was not thrown");
+			}
+			catch (NotSupportedException)
+			{
+				// Expected exception
+			}
 		}
 
 		[TestMethod]
@@ -57,11 +64,18 @@ namespace NGeoNamesTests
 		}
 
 		[TestMethod]
-		[ExpectedException(typeof(NotSupportedException))]
 		public async Task GeoFileWriter_ThrowsOnUnknownSpecifiedFileType()
 		{
 			//When an unknown filetype is specified an exception should be thrown
-			await new GeoFileWriter().WriteRecordsAsync(@"testdata\invalid.out.ext", testvalues, new CustomComposer(Encoding.UTF8, '\t'), (FileType)999);
+			try
+			{
+				await new GeoFileWriter().WriteRecordsAsync(@"testdata\invalid.out.ext", testvalues, new CustomComposer(Encoding.UTF8, '\t'), (FileType)999);
+				Assert.Fail("Expected NotSupportedException was not thrown");
+			}
+			catch (NotSupportedException)
+			{
+				// Expected exception
+			}
 		}
 	}
 }

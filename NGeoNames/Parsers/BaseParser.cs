@@ -1,6 +1,6 @@
-﻿using System.Globalization;
+﻿using System;
+using System.Globalization;
 using System.Text;
-using System;
 
 namespace NGeoNames.Parsers
 {
@@ -34,8 +34,21 @@ namespace NGeoNames.Parsers
 			if (string.IsNullOrWhiteSpace(value))
 				throw new ArgumentNullException(nameof(value), "Value cannot be null or empty.");
 
-			// If the string ends with ".0", remove the ".0"
-			if (value.EndsWith(".0"))
+			return StringToInt(value.AsSpan());
+		}
+
+		/// <summary>
+		/// Parses a span of characters to an integer, optimized for performance using Span&lt;T&gt;.
+		/// </summary>
+		/// <param name="value">The span of characters to parse.</param>
+		/// <returns>The parsed integer value.</returns>
+		protected int StringToInt(ReadOnlySpan<char> value)
+		{
+			if (value.IsEmpty || value.IsWhiteSpace())
+				throw new ArgumentException("Value cannot be null or empty.", nameof(value));
+
+			// If the span ends with ".0", trim it
+			if (value.Length >= 2 && value[^2] == '.' && value[^1] == '0')
 				value = value[..^2];
 
 			return int.Parse(value, NumberStyles.Integer, CultureInfo.InvariantCulture);
@@ -43,7 +56,23 @@ namespace NGeoNames.Parsers
 
 		protected long StringToLong(string value)
 		{
-			return long.Parse(value);
+			if (string.IsNullOrWhiteSpace(value))
+				throw new ArgumentNullException(nameof(value), "Value cannot be null or empty.");
+
+			return StringToLong(value.AsSpan());
+		}
+
+		/// <summary>
+		/// Parses a span of characters to a long integer, optimized for performance using Span&lt;T&gt;.
+		/// </summary>
+		/// <param name="value">The span of characters to parse.</param>
+		/// <returns>The parsed long integer value.</returns>
+		protected long StringToLong(ReadOnlySpan<char> value)
+		{
+			if (value.IsEmpty || value.IsWhiteSpace())
+				throw new ArgumentException("Value cannot be null or empty.", nameof(value));
+
+			return long.Parse(value, NumberStyles.Integer, CultureInfo.InvariantCulture);
 		}
 
 		protected string[] StringToArray(string value, bool removeEmptyEntries = true)
@@ -59,16 +88,65 @@ namespace NGeoNames.Parsers
 
 		protected float StringToFloat(string value)
 		{
+			if (string.IsNullOrWhiteSpace(value))
+				throw new ArgumentNullException(nameof(value), "Value cannot be null or empty.");
+
+			return StringToFloat(value.AsSpan());
+		}
+
+		/// <summary>
+		/// Parses a span of characters to a float, optimized for performance using Span&lt;T&gt;.
+		/// </summary>
+		/// <param name="value">The span of characters to parse.</param>
+		/// <returns>The parsed float value.</returns>
+		protected float StringToFloat(ReadOnlySpan<char> value)
+		{
+			if (value.IsEmpty || value.IsWhiteSpace())
+				throw new ArgumentException("Value cannot be null or empty.", nameof(value));
+
 			return float.Parse(value, NumberStyles.Float, CultureInfo.InvariantCulture);
 		}
 
 		protected double StringToDouble(string value)
 		{
+			if (string.IsNullOrWhiteSpace(value))
+				throw new ArgumentNullException(nameof(value), "Value cannot be null or empty.");
+
+			return StringToDouble(value.AsSpan());
+		}
+
+		/// <summary>
+		/// Parses a span of characters to a double, optimized for performance using Span&lt;T&gt;.
+		/// </summary>
+		/// <param name="value">The span of characters to parse.</param>
+		/// <returns>The parsed double value.</returns>
+		protected double StringToDouble(ReadOnlySpan<char> value)
+		{
+			if (value.IsEmpty || value.IsWhiteSpace())
+				throw new ArgumentException("Value cannot be null or empty.", nameof(value));
+
 			return double.Parse(value, NumberStyles.Float, CultureInfo.InvariantCulture);
 		}
 
 		protected DateTime StringToDateTime(string value, string format = "yyyy-MM-dd")
 		{
+			if (string.IsNullOrWhiteSpace(value))
+				throw new ArgumentNullException(nameof(value), "Value cannot be null or empty.");
+
+			return StringToDateTime(value.AsSpan(), format);
+		}
+
+		/// <summary>
+		/// Parses a span of characters to a DateTime, optimized for performance using Span&lt;T&gt;.
+		/// </summary>
+		/// <param name="value">The span of characters to parse.</param>
+		/// <param name="format">The expected date format.</param>
+		/// <returns>The parsed DateTime value.</returns>
+		protected DateTime StringToDateTime(ReadOnlySpan<char> value, string format = "yyyy-MM-dd")
+		{
+			if (value.IsEmpty || value.IsWhiteSpace())
+				throw new ArgumentException("Value cannot be null or empty.", nameof(value));
+
 			return DateTime.ParseExact(value, format, CultureInfo.InvariantCulture, DateTimeStyles.None);
 		}
 

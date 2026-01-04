@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NGeoNames;
 using NGeoNames.Parsers;
+using System;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -12,17 +13,31 @@ namespace NGeoNamesTests
 	public class ParserTests
 	{
 		[TestMethod]
-		[ExpectedException(typeof(ParserException))]
 		public async Task ParserThrowsOnInvalidData()
 		{
-			var target = await GeoFileReader.ReadAdmin1CodesAsync(@"testdata\invalid_admin1CodesASCII.txt").ToListAsync();
+			try
+			{
+				var target = await GeoFileReader.ReadAdmin1CodesAsync(@"testdata\invalid_admin1CodesASCII.txt").ToListAsync();
+				Assert.Fail("Expected ParserException was not thrown");
+			}
+			catch (ParserException)
+			{
+				// Expected exception
+			}
 		}
 
 		[TestMethod]
-		[ExpectedException(typeof(FileNotFoundException))]
 		public async Task ParserThrowsOnNonExistingFile()
 		{
-			var target = await GeoFileReader.ReadAdmin1CodesAsync(@"testdata\non_existing_file.txt").ToListAsync();
+			try
+			{
+				var target = await GeoFileReader.ReadAdmin1CodesAsync(@"testdata\non_existing_file.txt").ToListAsync();
+				Assert.Fail("Expected FileNotFoundException was not thrown");
+			}
+			catch (FileNotFoundException)
+			{
+				// Expected exception
+			}
 		}
 
 		[TestMethod]
@@ -241,7 +256,7 @@ namespace NGeoNamesTests
 		[TestMethod]
 		public async Task CustomParser_IsUsedCorrectlyAsync()
 		{
-			var target = (await new GeoFileReader().ReadRecordsAsync(@"testdata\test_custom.txt", new CustomParser(19, 5, new[] { '☃' }, Encoding.UTF7, true)).ToListAsync()).ToArray();
+			var target = (await new GeoFileReader().ReadRecordsAsync(@"testdata\test_custom.txt", new CustomParser(19, 5, new[] { '☃' }, Encoding.UTF8, true)).ToListAsync()).ToArray();
 
 			Assert.AreEqual(2, target.Length);
 			CollectionAssert.AreEqual(target[0].Data, target[1].Data);
@@ -265,10 +280,17 @@ namespace NGeoNamesTests
 		}
 
 		[TestMethod]
-		[ExpectedException(typeof(InvalidDataException))]
 		public async Task FileReader_ThrowsOnIncompatibleOrInvalidGZipFiles()
 		{
-			var target = await GeoFileReader.ReadCountryInfoAsync(@"testdata\countryInfo_not_gzip_compat.txt.gz").ToListAsync();
+			try
+			{
+				var target = await GeoFileReader.ReadCountryInfoAsync(@"testdata\countryInfo_not_gzip_compat.txt.gz").ToListAsync();
+				Assert.Fail("Expected InvalidDataException was not thrown");
+			}
+			catch (InvalidDataException)
+			{
+				// Expected exception
+			}
 		}
 
 		[TestMethod]

@@ -9,11 +9,11 @@
 		<Copyright>(C) 2024 Hypnotoad08</Copyright>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageProjectUrl>https://github.com/Hypnotoad08/NGeoNamesCore</PackageProjectUrl>
-		<PackageTags>reverse-geocoding geocoding geocode reverse-geocode geocoder reverse-geocoder maps</PackageTags>
-		<PackageReleaseNotes>This is a fork of NGeoNames, updated for .NET Core and .NET 8 compatibility.</PackageReleaseNotes>
-		<Description>Provides classes and methods for downloading, reading/parsing, and utilizing files from GeoNames.org dumps. Forked from NGeoNames for .NET Core compatibility.</Description>
+		<PackageTags>reverse-geocoding geocoding geocode reverse-geocode geocoder reverse-geocoder maps geonames performance async cancellation</PackageTags>
+		<PackageReleaseNotes>v1.7.0: Major performance improvements - Added CancellationToken support, Memory/Span optimizations (32% faster, 61% less memory), and IHttpClientFactory integration. Minor breaking change: Removed fake async methods from ReverseGeoCode (use synchronous methods instead).</PackageReleaseNotes>
+		<Description>High-performance library for downloading, parsing, and utilizing GeoNames.org data. Features async/await with CancellationToken support, Memory/Span optimizations for minimal allocations, and proper HttpClient management. Supports reverse geocoding, spatial searches, and file I/O operations. .NET 8 compatible.</Description>
 		<PackageIconUrl>https://raw.githubusercontent.com/Hypnotoad08/NGeoNamesCore/main/icon.png</PackageIconUrl>
-		<Version>1.6.2</Version>
+		<Version>1.7.0</Version>
 		<Title>NGeoNamesCore</Title>
 		<PackageIcon>icon.png</PackageIcon>
 		<PackageReadmeFile>README.md</PackageReadmeFile>

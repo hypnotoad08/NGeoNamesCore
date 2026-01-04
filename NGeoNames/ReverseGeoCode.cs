@@ -1,7 +1,6 @@
 ﻿using NGeoNames.Entities;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace NGeoNames
 {
@@ -31,25 +30,10 @@ namespace NGeoNames
 				Add(i);
 		}
 
-		public Task AddAsync(T node)
-		{
-			return Task.Run(() => Add(node));
-		}
-
-		public Task AddRangeAsync(IEnumerable<T> nodes)
-		{
-			return Task.Run(() => AddRange(nodes));
-		}
-
 		public void Balance()
 		{
 			if (_tree.Count > 0)
 				_tree.Balance();
-		}
-
-		public Task BalanceAsync()
-		{
-			return Task.Run(() => Balance());
 		}
 
 		public IEnumerable<T> RadialSearch(double lat, double lng, int maxcount)
@@ -82,16 +66,6 @@ namespace NGeoNames
 			return _tree.RadialSearch(GeoUtil.GetCoord(center), radius, maxcount).Select(v => v.Value);
 		}
 
-		public Task<IEnumerable<T>> RadialSearchAsync(double lat, double lng, double radius, int maxcount)
-		{
-			return Task.Run(() => RadialSearch(lat, lng, radius, maxcount));
-		}
-
-		public Task<IEnumerable<T>> RadialSearchAsync(T center, double radius, int maxcount)
-		{
-			return Task.Run(() => RadialSearch(center, radius, maxcount));
-		}
-
 		public IEnumerable<T> NearestNeighbourSearch(double lat, double lng)
 		{
 			return NearestNeighbourSearch(CreateFromLatLong(lat, lng), _tree.Count);
@@ -110,26 +84,6 @@ namespace NGeoNames
 		public IEnumerable<T> NearestNeighbourSearch(T center, int maxcount)
 		{
 			return _tree.GetNearestNeighbours(GeoUtil.GetCoord(center), maxcount).Select(v => v.Value);
-		}
-
-		public Task<IEnumerable<T>> NearestNeighbourSearchAsync(double lat, double lng, int maxcount)
-		{
-			return Task.Run(() => NearestNeighbourSearch(lat, lng, maxcount));
-		}
-
-		public Task<IEnumerable<T>> NearestNeighbourSearchAsync(T center, int maxcount)
-		{
-			return Task.Run(() => NearestNeighbourSearch(center, maxcount));
-		}
-
-		public async Task<IEnumerable<T>> RadialSearchAsync(double lat, double lng, int maxcount)
-		{
-			return await Task.FromResult(RadialSearch(lat, lng, maxcount));
-		}
-
-		public async Task<IEnumerable<T>> RadialSearchAsync(T center, double radius)
-		{
-			return await Task.FromResult(RadialSearch(center, radius));
 		}
 
 		public T CreateFromLatLong(double lat, double lng)

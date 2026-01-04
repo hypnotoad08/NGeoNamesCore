@@ -27,12 +27,19 @@ namespace NGeoNamesTests
 		}
 
 		[TestMethod]
-		[ExpectedException(typeof(NotSupportedException))]
 		public async Task GeoFileReader_ThrowsOnFailureWhenAutodetectingFileType()
 		{
 			//When filetype == autodetect and an unknown extension is used an exception should be thrown
 			var gf = new GeoFileReader();
-			var target = (await gf.ReadRecordsAsync(@"testdata\invalid.ext", new CustomParser(5, 0, new[] { '\t' }, Encoding.UTF8, false)).ToListAsync()).ToArray();
+			try
+			{
+				var target = (await gf.ReadRecordsAsync(@"testdata\invalid.ext", new CustomParser(5, 0, new[] { '\t' }, Encoding.UTF8, false)).ToListAsync()).ToArray();
+				Assert.Fail("Expected NotSupportedException was not thrown");
+			}
+			catch (NotSupportedException)
+			{
+				// Expected exception
+			}
 		}
 
 		[TestMethod]
@@ -44,12 +51,19 @@ namespace NGeoNamesTests
 		}
 
 		[TestMethod]
-		[ExpectedException(typeof(NotSupportedException))]
 		public async Task GeoFileReader_ThrowsOnUnknownSpecifiedFileType()
 		{
 			//When and unknown filetype is specified an exception should be thrown
 			var gf = new GeoFileReader();
-			var target = (await gf.ReadRecordsAsync(@"testdata\invalid.ext", (FileType)999, new CustomParser(5, 0, new[] { '\t' }, Encoding.UTF8, false)).ToListAsync()).ToArray();
+			try
+			{
+				var target = (await gf.ReadRecordsAsync(@"testdata\invalid.ext", (FileType)999, new CustomParser(5, 0, new[] { '\t' }, Encoding.UTF8, false)).ToListAsync()).ToArray();
+				Assert.Fail("Expected NotSupportedException was not thrown");
+			}
+			catch (NotSupportedException)
+			{
+				// Expected exception
+			}
 		}
 	}
 }

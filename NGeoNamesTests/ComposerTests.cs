@@ -210,16 +210,16 @@ namespace NGeoNamesTests
 			var dst = @"testdata\test_custom.out.txt";
 
 			// Read records from the source file asynchronously
-			var records = await new GeoFileReader().ReadRecordsAsync(src, new CustomParser(19, 5, new[] { '☃' }, Encoding.UTF7, true)).ToListAsync();
+			var records = await new GeoFileReader().ReadRecordsAsync(src, new CustomParser(19, 5, new[] { '☃' }, Encoding.UTF8, true)).ToListAsync();
 
 			// Write the records to the destination file asynchronously
 			using (var stream = new FileStream(dst, FileMode.Create, FileAccess.Write))
 			{
-				await new GeoFileWriter().WriteRecordsAsync(stream, records, new CustomComposer(Encoding.UTF7, '☃'));
+				await new GeoFileWriter().WriteRecordsAsync(stream, records, new CustomComposer(Encoding.UTF8, '☃'));
 			}
 
 			// Ensure both files (src and dst) are functionally equal
-			FileUtil.EnsureFilesAreFunctionallyEqual(src, dst, 19, 5, new[] { '☃' }, Encoding.UTF7, true);
+			FileUtil.EnsureFilesAreFunctionallyEqual(src, dst, 19, 5, new[] { '☃' }, Encoding.UTF8, true);
 		}
 
 		[TestMethod]
