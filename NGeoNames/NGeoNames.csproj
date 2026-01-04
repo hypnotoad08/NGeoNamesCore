@@ -6,7 +6,7 @@
 		<PackageId>NGeoNamesCore</PackageId>
 		<NoPackageAnalysis>true</NoPackageAnalysis>
 		<Product>NGeoNamesCore</Product>
-		<Copyright>(C) 2024 Hypnotoad08</Copyright>
+		<Copyright>(C) 2026 Hypnotoad08</Copyright>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageProjectUrl>https://github.com/Hypnotoad08/NGeoNamesCore</PackageProjectUrl>
 		<PackageTags>reverse-geocoding geocoding geocode reverse-geocode geocoder reverse-geocoder maps geonames performance async cancellation</PackageTags>
